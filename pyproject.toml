@@ -1,0 +1,27 @@
+[project]
+name            = "llm-meter"
+version         = "0.1.0"
+description     = "Drop-in decorators for LLM cost & latency telemetry"
+authors         = [{ name = "YOUR_NAME", email = "you@example.com" }]
+license         = { file = "LICENSE" }
+readme          = "README.md"
+requires-python = ">=3.9"
+keywords        = ["openai", "pricing", "observability", "llm"]
+classifiers     = ["License :: OSI Approved :: MIT License"]
+
+[project.urls]
+Homepage = "https://github.com/YOUR_GH_HANDLE/llm-meter"
+Issues   = "https://github.com/YOUR_GH_HANDLE/llm-meter/issues"
+
+[project.dependencies]
+tiktoken = "*"
+pyyaml   = "*"
+
+[project.optional-dependencies]
+dev = ["pytest", "pre-commit", "ruff"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
