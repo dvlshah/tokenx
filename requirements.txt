@@ -1,0 +1,15 @@
+# Core dependencies
+pyyaml>=6.0
+tiktoken>=0.4.0
+
+# Testing dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+pytest-asyncio>=0.21.0  # For testing async functions
+
+# Optional provider dependencies
+# Uncomment as needed for development or testing
+# openai>=1.0.0
+# anthropic>=0.18.0
+# google-generativeai>=0.3.0

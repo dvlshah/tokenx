@@ -1,0 +1,133 @@
+# LLM token prices — refreshed 2025-05-03
+#
+# Units: USD per ONE-MILLION tokens
+# Keys:
+#   sync:  regular synchronous completions
+#   flex:  Flex/Batch processing (lower priority, if offered)
+#
+# For models that don't (yet) have flex pricing we omit the flex block.
+# --------------------------------------------------------------------
+
+openai:
+  # OpenAI models
+  gpt-4.1:
+    sync:
+      in:        2.00
+      cached_in: 0.50
+      out:       8.00
+
+  gpt-4.1-mini:
+    sync:
+      in:        0.40
+      cached_in: 0.10
+      out:       1.60
+
+  gpt-4.1-nano:
+    sync:
+      in:        0.10
+      cached_in: 0.025
+      out:       0.40
+
+  gpt-4.5-preview:
+    sync:
+      in:        75.00
+      cached_in: 37.50
+      out:       150.00
+
+  gpt-4o:
+    sync:
+      in:        2.50
+      cached_in: 1.25     # 50 %
+      out:       10.00
+
+  gpt-4o-realtime-preview:
+    sync:
+      in:        5.00
+      cached_in: 2.50
+      out:       20.00
+
+  gpt-4o-mini:
+    sync:
+      in:        0.15
+      cached_in: 0.075
+      out:       0.60
+
+  gpt-4o-mini-realtime-preview:
+    sync:
+      in:        0.60
+      cached_in: 0.30
+      out:       2.40
+
+  o1:
+    sync:
+      in:        15.00
+      cached_in: 7.50
+      out:       60.00
+
+  o1-mini:
+    sync:
+      in:        1.10
+      cached_in: 0.55
+      out:       4.40
+
+  o1-pro:
+    sync:
+      in:        150.00
+      cached_in: null      # "–" in table → not discounted / not supported
+      out:       600.00
+
+  o3:
+    sync:
+      in:        10.00
+      cached_in: 2.50
+      out:       40.00
+    flex:
+      in:        5.00
+      cached_in: 1.25
+      out:       20.00
+
+  o3-mini:
+    sync:
+      in:        1.10
+      cached_in: 0.55
+      out:       4.40
+
+  o4-mini:
+    sync:
+      in:        1.10
+      cached_in: 0.275
+      out:       4.40
+    flex:
+      in:        0.55
+      cached_in: 0.138
+      out:       2.20
+
+  gpt-4o-mini-search-preview:
+    sync:
+      in:        0.15
+      cached_in: null
+      out:       0.60
+
+  gpt-4o-search-preview:
+    sync:
+      in:        2.50
+      cached_in: null
+      out:       10.00
+
+  computer-use-preview:
+    sync:
+      in:        3.00
+      cached_in: null
+      out:       12.00
+
+  gpt-image-1:
+    sync:
+      in:        5.00
+      cached_in: null
+      out:       null      # image-only model — no text output price
+
+  gpt-3.5-turbo-0125:
+    sync:
+      in:        0.50     # USD per 1M tokens
+      cached_in: 0.25     # 50 % discount
+      out:       1.50

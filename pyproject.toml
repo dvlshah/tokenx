@@ -1,27 +1,72 @@
 [project]
-name            = "llm-meter"
-version         = "0.1.0"
-description     = "Drop-in decorators for LLM cost & latency telemetry"
-authors         = [{ name = "YOUR_NAME", email = "you@example.com" }]
+name            = "tokenx"
+version         = "0.1.0"  # Start with your preferred initial version
+description     = "Cross-provider LLM token tracking and cost calculation"
+authors         = [{ name = "Deval Shah", email = "deval@neurink.ai" }]
 license         = { file = "LICENSE" }
 readme          = "README.md"
 requires-python = ">=3.9"
-keywords        = ["openai", "pricing", "observability", "llm"]
-classifiers     = ["License :: OSI Approved :: MIT License"]
+keywords        = ["openai", "pricing", "observability", "llm", "anthropic", "gemini"]
 
 [project.urls]
-Homepage = "https://github.com/YOUR_GH_HANDLE/llm-meter"
-Issues   = "https://github.com/YOUR_GH_HANDLE/llm-meter/issues"
+Homepage = "https://github.com/dvlshah/tokenx"
+Documentation = "https://github.com/dvlshah/tokenx#readme" # Or link to Read the Docs if set up
+Repository = "https://github.com/dvlshah/tokenx"
+"Bug Tracker" = "https://github.com/dvlshah/tokenx/issues"
+Changelog = "https://github.com/dvlshah/tokenx/blob/main/docs/CHANGELOG.md"
 
-[project.dependencies]
-tiktoken = "*"
-pyyaml   = "*"
+dependencies = [
+  "tiktoken",
+  "pyyaml",
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",  # Adjust as appropriate (Alpha/Beta/Production)
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
 
 [project.optional-dependencies]
-dev = ["pytest", "pre-commit", "ruff"]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "pytest-mock",
+  "pytest-asyncio",  # Added for async tests
+  "ruff"
+]
+
+# Provider-specific dependencies
+openai = ["openai>=1.0.0"]
+anthropic = ["anthropic>=0.18.0"]
+gemini = ["google-generativeai>=0.3.0"]
+all = ["openai>=1.0.0", "anthropic>=0.18.0", "google-generativeai>=0.3.0"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]          # scan only the src/ tree
+namespaces = false       # plain packages, not namespace pkgs
+
+[tool.setuptools.package-data]
+"tokenx" = ["model_prices.yaml"]
 
 [tool.pytest.ini_options]
-addopts = "-q"
+addopts = "-q -m 'not real_api'" # Skip real_api tests by default
+markers = [
+  "asyncio: marks tests that use async/await syntax",
+  "real_api: marks tests requiring live API keys and network access",
+]
 
-[tool.ruff]
-line-length = 100
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
