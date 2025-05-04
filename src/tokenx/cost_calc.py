@@ -22,6 +22,7 @@ from typing import Any, Dict, Callable, Union
 
 from .providers import ProviderRegistry
 from .yaml_loader import load_yaml_prices
+from .errors import TokenExtractionError
 
 
 # For backward compatibility with existing code
