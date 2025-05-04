@@ -1,6 +1,6 @@
 [project]
 name            = "tokenx-core"
-version         = "0.2.1"  # Start with your preferred initial version
+version         = "0.2.2"
 description     = "Cross-provider LLM token tracking and cost calculation"
 authors         = [{ name = "Deval Shah", email = "deval@neurink.ai" }]
 license         = { file = "LICENSE" }
