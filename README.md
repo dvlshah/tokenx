@@ -1,15 +1,51 @@
-# 🧮 tokenx
+<p align="center">
+  <img src="docs/assets/logo.png" alt="tokenX logo" width="280">
+</p>
 
-[![PyPI version](https://img.shields.io/pypi/v/tokenx.svg)](https://pypi.org/project/tokenx/)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/dvlshah/tokenx/test.yml?branch=main)](https://github.com/dvlshah/tokenx/actions)
-[![Python](https://img.shields.io/pypi/pyversions/tokenx.svg)](https://pypi.org/project/tokenx/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code Coverage](https://img.shields.io/codecov/c/github/dvlshah/tokenx.svg)](https://codecov.io/gh/dvlshah/tokenx)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/tokenx.svg)](https://pypi.org/project/tokenx/)
+<h1 align="center">🧮 tokenx-core</h1>
+<p align="center"><em>Instant cost&nbsp;•&nbsp;Instant latency&nbsp;•&nbsp;Zero code refactor</em></p>
 
+<p align="center"><strong>👉 Like what you see?&nbsp;<a href="https://github.com/dvlshah/tokenx/stargazers">Star the repo</a> &nbsp;and&nbsp;<a href="https://github.com/dvlshah">follow @dvlshah</a> for updates!</strong></p>
+
+
+<p align="center">
+  <a href="https://pypi.org/project/tokenx-core/"><img alt="PyPI" src="https://img.shields.io/pypi/v/tokenx-core?color=blue"></a>
+  <a href="https://github.com/dvlshah/tokenx/actions/workflows/test.yml"><img alt="CI" src="https://github.com/dvlshah/tokenx/actions/workflows/test.yml/badge.svg?branch=main"></a>
+  <a href="https://pypi.org/project/tokenx-core/"><img alt="Python Versions" src="https://img.shields.io/pypi/pyversions/tokenx-core"></a>
+  <a href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <!-- <a href="https://codecov.io/gh/dvlshah/tokenx"><img alt="Coverage" src="https://img.shields.io/codecov/c/github/dvlshah/tokenx"></a> -->
+  <a href="https://pypi.org/project/tokenx-core/"><img alt="Downloads" src="https://img.shields.io/pypi/dm/tokenx-core"></a>
+  <!-- <a href="https://github.com/dvlshah/tokenx/discussions"><img alt="Chat" src="https://img.shields.io/badge/Chat-Discussions-ff69b4?logo=github"></a> -->
+</p>
 > Plug-and-play decorators for tracking **cost** & **latency** of LLM API calls.
 
 tokenx provides a simple way to monitor the cost and performance of your LLM integrations without changing your existing code. Just add decorators to your API call functions and get detailed metrics automatically.
+
+
+> **Decorator in → Metrics out.**
+> Monitor cost & latency of any LLM function without touching its body.
+
+```bash
+pip install tokenx-core[openai]          # 1️⃣ install
+```
+
+```python
+from tokenx.metrics import measure_cost, measure_latency   # 2️⃣ decorate
+from openai import OpenAI
+
+@measure_latency
+@measure_cost(provider="openai", model="gpt-4o-mini")
+def ask(prompt: str):
+    return OpenAI().chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+resp, m = ask("Hello!")                                   # 3️⃣ run
+print(m["cost_usd"], "USD |", m["latency_ms"], "ms")
+```
+
+---
 
 ## 🤔 Why tokenx?
 
@@ -20,38 +56,45 @@ Integrating with LLM APIs often involves hidden costs and variable performance. 
 *   **Performance Insights:** Easily measure API call latency to identify bottlenecks.
 *   **Multi-Provider Ready:** Designed to consistently monitor costs across different LLM vendors (OpenAI currently supported, more coming soon!).
 
-## 📊 Workflow
+---
+
+## 🏗️ Architecture (1‑min overview)
 
 ```mermaid
-graph LR
-    A[Your Function with API Call] -- Decorated with --> B("@measure_cost / @measure_latency");
-    B -- Calls --> A;
-    A -- Returns --> C[API Response];
-    B -- Processes --> C;
-    B -- Uses --> D{CostCalculator};
-    D -- Uses --> E[ProviderAdapter];
-    E -- Uses --> F[model_prices.yaml];
-    B -- Returns --> G((Response, Metrics Dict));
+flowchart LR
+    subgraph user["Your code"]
+        F((API call))
+    end
+    F -->|decorators| D[tokenx wrapper]
+    D -- cost --> C[CostCalculator]
+    D -- latency --> L[Latency Timer]
+    C -- lookup --> Y[model_prices.yaml]
+    D -->|metrics| M[Structured JSON → stdout / exporter]
 ```
 
-## ✨ Features
+*No vendor lock‑in:*  pure‑Python wrapper emits plain dicts—pipe them to Prometheus, Datadog, or stdout.
 
-- **Simple decorators** for cost & latency tracking
-- **Multi-provider support** for major LLM APIs
-- **YAML-driven pricing** that's easy to update
-- **Sync and async** function support
-- **Flexible tier pricing** including caching discounts
-- **Zero-config setup** with minimal dependencies
+---
+
+## 💡 Features at a glance
+
+* **Track & save money** – live USD costing with cached‑token discounts
+* **Trace latency** – pinpoint slow models or network hops
+* **Plug‑&‑play decorators** – wrap any sync or async function
+* **Provider plug‑ins** – OpenAI today, Anthropic & Gemini next
+* **Typed** – 100 % `py.typed`, 95 %+ mypy coverage
+* **Zero deps** – slims Docker images
+
+---
 
 ## 📦 Installation
 
 ```bash
-# Basic installation
-pip install tokenx
-
-# With provider dependencies
-pip install tokenx[openai]    # For OpenAI support
+pip install tokenx-core                 # stable
+pip install tokenx-core[openai]         # with provider extras
 ```
+
+---
 
 ## 🚀 Quick Start
 
@@ -167,6 +210,8 @@ cost = calc.calculate_cost(
 cost = calc.cost_from_response(response)
 ```
 
+---
+
 ## 🔄 Provider Compatibility
 
 tokenx is designed to work with multiple LLM providers. Here's the current compatibility matrix:
@@ -237,26 +282,27 @@ When you use the decorators, you'll get a structured metrics dictionary:
 }
 ```
 
-## 📚 Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please check out our [contributing guidelines](docs/CONTRIBUTING.md).
+```bash
+git clone https://github.com/dvlshah/tokenx.git
+pre-commit install
+pip install -e .[dev]   # or `poetry install`
+pytest -q && mypy src/
+```
+
+See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for details.
+
+---
 
 ## 📝 Changelog
 
-See [CHANGELOG.md](docs/CHANGELOG.md) for a complete history of changes.
+See [CHANGELOG.md](docs/CHANGELOG.md) for full history.
 
-### v0.2.0 (2025-05-03)
-- Added provider architecture for multi-provider support
-- Enhanced OpenAI adapter to handle all response formats
-- Added support for cached token extraction and pricing
-- Improved error handling with detailed messages
-- See [CHANGELOG.md](docs/CHANGELOG.md) for full details
+---
 
-### v0.1.0 (2025-04-01)
-- Initial release with OpenAI support
-- Added latency and cost measurement decorators
-- Implemented YAML-driven pricing
-
-## 📄 License
+## 📜 License
 
 MIT © 2025 Deval Shah
+
+<p align="center"><em>If tokenX saves you time or money, please consider <a href="https://github.com/sponsors/dvlshah">sponsoring</a> or giving a ⭐ – it really helps!</em></p>
