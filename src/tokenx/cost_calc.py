@@ -154,13 +154,13 @@ class CostCalculator:
 
         # If no valid usage data structure was found, raise an error
         if usage_data is None:
-             # Raise TokenExtractionError directly here as the structure is wrong
-             # Use the provider associated with this calculator instance
+            # Raise TokenExtractionError directly here as the structure is wrong
+            # Use the provider associated with this calculator instance
             raise TokenExtractionError(
-                 "Response object does not contain expected 'usage' attribute or key.",
-                 self.provider_name,
-                 type(response).__name__,
-             )
+                "Response object does not contain expected 'usage' attribute or key.",
+                self.provider_name,
+                type(response).__name__,
+            )
 
         # Proceed to calculate cost using the extracted usage data
         return self.cost_from_usage(usage_data)
