@@ -1,5 +1,6 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="tokenX logo" width="260">
+  <img src="https://raw.githubusercontent.com/dvlshah/tokenx/main/docs/assets/logo.png"
+       alt="tokenX logo" width="280">
 </p>
 
 <p align="center"><em>Track cost and latency of your LLM calls </em></p>
