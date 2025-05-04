@@ -1,16 +1,11 @@
-import pytest
 from pathlib import Path
 import yaml
 import tempfile
-from tokenx.yaml_loader import load_yaml_prices, YAML_PATH
+from tokenx.yaml_loader import load_yaml_prices
 
 class TestYAMLLoader:
     def test_load_multiformat_yaml(self, monkeypatch):
         """Test loading the new multi-provider YAML format."""
-        import tempfile
-        from pathlib import Path
-        import yaml
-        from tokenx.yaml_loader import load_yaml_prices
 
         # Create a temporary YAML file with the new format
         with tempfile.NamedTemporaryFile(mode='w+', suffix='.yaml') as tmp:
@@ -40,7 +35,7 @@ class TestYAMLLoader:
 
     def test_backward_compatibility(self):
         """Test backward compatibility with old format."""
-        from tokenx.cost_calc import PRICE_TABLE, PRICE_PER_TOKEN
+        from tokenx.cost_calc import PRICE_PER_TOKEN
 
         # Verify imported objects have expected structure
         assert any(model in PRICE_PER_TOKEN for model in

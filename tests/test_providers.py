@@ -1,6 +1,4 @@
-import pytest
 from tokenx.providers import ProviderRegistry
-from tokenx.providers.base import ProviderAdapter
 from tokenx.providers.openai import OpenAIAdapter
 
 class TestProviderRegistry:

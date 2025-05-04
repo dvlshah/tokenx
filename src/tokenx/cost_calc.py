@@ -17,7 +17,7 @@ Dependencies
 from __future__ import annotations
 
 import functools
-from typing import Any, Dict, Callable, Optional, Tuple, Union
+from typing import Any, Dict, Callable, Union
 
 from .providers import ProviderRegistry
 from .yaml_loader import load_yaml_prices

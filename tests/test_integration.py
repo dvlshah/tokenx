@@ -1,4 +1,3 @@
-import pytest
 import time
 from tokenx.metrics import measure_latency, measure_cost
 

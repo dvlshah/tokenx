@@ -5,8 +5,6 @@ This script demonstrates the enhanced error handling capabilities
 for the OpenAI provider adapter.
 """
 
-import sys
-from pprint import pprint
 
 
 def test_error_handling():
@@ -51,7 +49,7 @@ def test_error_handling():
 
     try:
         input_tokens, output_tokens, cached_tokens = adapter.extract_tokens(ResponseWithUsageAttribute())
-        print(f"✅ Successfully extracted tokens from Pydantic-like response:")
+        print("✅ Successfully extracted tokens from Pydantic-like response:")
         print(f"   Input tokens: {input_tokens}")
         print(f"   Output tokens: {output_tokens}")
         print(f"   Cached tokens: {cached_tokens}\n")
@@ -73,7 +71,7 @@ def test_error_handling():
 
     try:
         input_tokens, output_tokens, cached_tokens = adapter.extract_tokens(response_dict)
-        print(f"✅ Successfully extracted tokens from dictionary response:")
+        print("✅ Successfully extracted tokens from dictionary response:")
         print(f"   Input tokens: {input_tokens}")
         print(f"   Output tokens: {output_tokens}")
         print(f"   Cached tokens: {cached_tokens}\n")

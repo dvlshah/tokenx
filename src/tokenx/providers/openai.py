@@ -3,9 +3,7 @@ OpenAI Provider Adapter Implementation
 
 This module implements the OpenAI provider adapter with enhanced error handling.
 """
-import functools
-import inspect
-from typing import Any, Dict, Optional, Tuple, Callable
+from typing import Any, Dict, Optional, Tuple
 
 import tiktoken
 

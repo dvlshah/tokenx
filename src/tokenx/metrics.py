@@ -16,7 +16,7 @@ from __future__ import annotations
 import functools
 import inspect
 import time
-from typing import Any, Awaitable, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Tuple, Union
 
 from .cost_calc import CostCalculator
 

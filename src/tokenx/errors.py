@@ -4,7 +4,7 @@ Error handling module for tokenx.
 This module defines exception classes and utilities for error handling
 across all provider adapters in tokenx.
 """
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, List, Optional, Tuple
 
 
 class LLMMeterError(Exception):

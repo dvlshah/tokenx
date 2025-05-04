@@ -5,7 +5,7 @@ All provider adapters must implement this interface to ensure consistent
 token counting and cost calculation across different LLM providers.
 """
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional, Tuple
 
 
 class ProviderAdapter(ABC):

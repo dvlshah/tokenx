@@ -1,4 +1,3 @@
-import pytest
 from tokenx.cost_calc import OpenAICostCalculator
 
 class TestBackwardCompatibility:

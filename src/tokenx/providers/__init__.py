@@ -3,11 +3,10 @@ Provider Registry for LLM Meter
 
 This module handles provider registration and discovery for cost calculation.
 """
-from typing import Dict, List, Optional, Type, Any
+from typing import Dict, List, Optional, Any
 import importlib
 import inspect
 import pkgutil
-import sys
 from pathlib import Path
 
 from .base import ProviderAdapter

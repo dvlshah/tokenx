@@ -3,11 +3,9 @@ Fixed test file for the OpenAI adapter.
 
 This file tests the OpenAI adapter functionality with correct import paths.
 """
-import pytest
 from unittest.mock import MagicMock, patch
 
 # Fix: Use absolute imports instead of relative imports
-from tokenx.providers.base import ProviderAdapter
 from tokenx.providers.openai import OpenAIAdapter
 
 class TestOpenAIAdapter:
