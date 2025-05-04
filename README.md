@@ -24,7 +24,7 @@ Integrating with LLM APIs often involves hidden costs and variable performance. 
 
 ```mermaid
 graph LR
-    A[Your Function with API Call] -- Decorated with --> B(@measure_cost / @measure_latency);
+    A[Your Function with API Call] -- Decorated with --> B("@measure_cost / @measure_latency");
     B -- Calls --> A;
     A -- Returns --> C[API Response];
     B -- Processes --> C;
