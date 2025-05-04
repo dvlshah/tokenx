@@ -64,7 +64,8 @@ class OpenAIAdapter(ProviderAdapter):
         Returns:
             dict: Normalized usage data with input_tokens, output_tokens, and cached_tokens
         """
-        result = {"input_tokens": 0, "output_tokens": 0, "cached_tokens": 0}
+        # Initialize with None to detect if values were actually found
+        result = {"input_tokens": None, "output_tokens": None, "cached_tokens": 0}
 
         # Handle attribute-based access (Pydantic models)
         if hasattr(usage, "__dict__") or hasattr(usage, "__getattr__"):
@@ -95,14 +96,14 @@ class OpenAIAdapter(ProviderAdapter):
 
         # Handle dictionary-based access
         elif isinstance(usage, dict):
-            # Input tokens
-            result["input_tokens"] = usage.get("prompt_tokens", 0) or usage.get(
-                "input_tokens", 0
+            # Input tokens - use None as default to detect missing keys
+            result["input_tokens"] = usage.get("prompt_tokens") or usage.get(
+                "input_tokens"
             )
 
-            # Output tokens
-            result["output_tokens"] = usage.get("completion_tokens", 0) or usage.get(
-                "output_tokens", 0
+            # Output tokens - use None as default
+            result["output_tokens"] = usage.get("completion_tokens") or usage.get(
+                "output_tokens"
             )
 
             # Cached tokens
@@ -111,6 +112,20 @@ class OpenAIAdapter(ProviderAdapter):
             )
             if isinstance(details, dict):
                 result["cached_tokens"] = details.get("cached_tokens", 0)
+
+        # Ensure required tokens were found
+        if result["input_tokens"] is None or result["output_tokens"] is None:
+            raise TokenExtractionError(
+                "Could not extract required 'input_tokens' or 'output_tokens' from usage data.",
+                self.provider_name,
+                type(usage).__name__,
+            )
+
+        # Fill in 0 for any Nones that weren't required (like cached_tokens if details missing)
+        # or if the initial value was 0 from the get() calls.
+        result["input_tokens"] = result["input_tokens"] or 0
+        result["output_tokens"] = result["output_tokens"] or 0
+        # cached_tokens already defaults to 0
 
         return result
 

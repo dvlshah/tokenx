@@ -143,21 +143,26 @@ class CostCalculator:
         Returns:
             float: Cost in USD
         """
-        usage = None
+        usage_data = None
 
-        # Try to extract usage from response
+        # Try to extract usage from response object attributes or dict keys
         if hasattr(response, "usage"):
-            usage = response.usage
+            usage_data = response.usage
         elif isinstance(response, dict) and "usage" in response:
-            usage = response["usage"]
-        else:
-            # Try to use the response itself as usage data
-            usage = response
+            usage_data = response["usage"]
 
-        if usage is None:
-            raise ValueError("Could not extract usage data from response")
+        # If no valid usage data structure was found, raise an error
+        if usage_data is None:
+             # Raise TokenExtractionError directly here as the structure is wrong
+             # Use the provider associated with this calculator instance
+            raise TokenExtractionError(
+                 "Response object does not contain expected 'usage' attribute or key.",
+                 self.provider_name,
+                 type(response).__name__,
+             )
 
-        return self.cost_from_usage(usage)
+        # Proceed to calculate cost using the extracted usage data
+        return self.cost_from_usage(usage_data)
 
     def costed(self, expects_usage: bool = False) -> Callable:
         """
