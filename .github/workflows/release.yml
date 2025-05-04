@@ -1,17 +1,43 @@
-name: Build & Upload
+name: Release TokenX
+
 on:
   push:
-    tags: ["v*"]
+    tags:
+      - "v*.*.*" # Trigger on tags like v0.1.0
+
 jobs:
-  pypi:
+  release: # Renamed job for clarity
+    name: Create Release and Publish to PyPI
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to create releases
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: {python-version: "3.11"}
-      - run: pip install build twine
-      - run: python -m build
-      - env:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11" # Use a specific version for consistency
+
+      - name: Install dependencies
+        run: pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2 # Use v2 for latest features
+        with:
+          # This automatically uses the tag name for the release name and tag
+          # You can customize the release notes if needed, e.g., using body_path
+          files: dist/* # Upload the built distributions as release assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Default token is usually sufficient
+
+      - name: Publish package to PyPI
+        env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: twine upload dist/*

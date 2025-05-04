@@ -8,13 +8,6 @@ readme          = "README.md"
 requires-python = ">=3.9"
 keywords        = ["openai", "pricing", "observability", "llm", "anthropic", "gemini"]
 
-[project.urls]
-Homepage = "https://github.com/dvlshah/tokenx"
-Documentation = "https://github.com/dvlshah/tokenx#readme" # Or link to Read the Docs if set up
-Repository = "https://github.com/dvlshah/tokenx"
-"Bug Tracker" = "https://github.com/dvlshah/tokenx/issues"
-Changelog = "https://github.com/dvlshah/tokenx/blob/main/docs/CHANGELOG.md"
-
 dependencies = [
   "tiktoken",
   "pyyaml",
@@ -34,6 +27,13 @@ classifiers = [
     "Topic :: Utilities",
     "Typing :: Typed",
 ]
+
+[project.urls]
+Homepage = "https://github.com/dvlshah/tokenx"
+Documentation = "https://github.com/dvlshah/tokenx#readme" # Or link to Read the Docs if set up
+Repository = "https://github.com/dvlshah/tokenx"
+"Bug Tracker" = "https://github.com/dvlshah/tokenx/issues"
+Changelog = "https://github.com/dvlshah/tokenx/blob/main/docs/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
