@@ -19,7 +19,7 @@
 > Monitor cost & latency of any LLM function without touching its body.
 
 ```bash
-pip install tokenx-core[openai]          # 1️⃣ install
+pip install tokenx-core                                    # 1️⃣ install
 ```
 
 ```python
