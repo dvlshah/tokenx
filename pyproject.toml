@@ -1,5 +1,5 @@
 [project]
-name            = "tokenx"
+name            = "tokenx-core"
 version         = "0.1.0"  # Start with your preferred initial version
 description     = "Cross-provider LLM token tracking and cost calculation"
 authors         = [{ name = "Deval Shah", email = "deval@neurink.ai" }]
