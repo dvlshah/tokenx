@@ -1,5 +1,6 @@
 from tokenx.cost_calc import OpenAICostCalculator
 
+
 class TestBackwardCompatibility:
     def test_openai_calculator(self):
         """Test that OpenAICostCalculator works as before."""

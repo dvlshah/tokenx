@@ -4,6 +4,7 @@ Base Provider Interface for LLM Cost Calculation
 All provider adapters must implement this interface to ensure consistent
 token counting and cost calculation across different LLM providers.
 """
+
 from abc import ABC, abstractmethod
 from typing import Any, Optional, Tuple
 
@@ -61,8 +62,14 @@ class ProviderAdapter(ABC):
         pass
 
     @abstractmethod
-    def calculate_cost(self, model: str, input_tokens: int, output_tokens: int,
-                       cached_tokens: int = 0, tier: str = "sync") -> float:
+    def calculate_cost(
+        self,
+        model: str,
+        input_tokens: int,
+        output_tokens: int,
+        cached_tokens: int = 0,
+        tier: str = "sync",
+    ) -> float:
         """
         Calculate cost in USD based on token usage.
 

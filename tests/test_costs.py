@@ -5,6 +5,7 @@ Robust tests for cost_calc.py
 We query the calculator for the *actual* token counts of our synthetic
 prompts so that the expected-cost formula matches reality.
 """
+
 import math
 
 import pytest
@@ -33,15 +34,15 @@ def test_blended_cost(model):
 
     p_tok = calc._count(prompt)
     c_tok = calc._count(completion)
-    cached = min(1024, p_tok)        # same clamp the library uses
+    cached = min(1024, p_tok)  # same clamp the library uses
 
     got = calc.blended_cost(prompt, completion, cached)
 
     price = PRICE_PER_TOKEN[model]
     expected = (
-        (p_tok - cached) * price["in"] +
-        cached           * price["cached_in"] +
-        c_tok            * price["out"]
+        (p_tok - cached) * price["in"]
+        + cached * price["cached_in"]
+        + c_tok * price["out"]
     )
     assert math.isclose(got, expected, rel_tol=1e-9)
 
@@ -58,8 +59,8 @@ def test_cost_from_usage():
 
     price = PRICE_PER_TOKEN["gpt-4o-mini"]
     expected = (
-        (prompt_tok - cached_tok) * price["in"] +
-        cached_tok               * price["cached_in"] +
-        comp_tok                 * price["out"]
+        (prompt_tok - cached_tok) * price["in"]
+        + cached_tok * price["cached_in"]
+        + comp_tok * price["out"]
     )
     assert math.isclose(calc.cost_from_usage(usage), expected, rel_tol=1e-9)

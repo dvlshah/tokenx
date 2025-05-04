@@ -3,9 +3,11 @@ import time
 import asyncio
 from tokenx.metrics import measure_latency, measure_cost
 
+
 class TestMetricsDecorators:
     def test_measure_latency_sync(self):
         """Test the latency decorator with sync functions."""
+
         @measure_latency
         def mock_function():
             time.sleep(0.01)
@@ -19,6 +21,7 @@ class TestMetricsDecorators:
     @pytest.mark.asyncio
     async def test_measure_latency_async(self):
         """Test the latency decorator with async functions."""
+
         @measure_latency
         async def mock_function():
             await asyncio.sleep(0.01)
@@ -51,15 +54,16 @@ class TestMetricsDecorators:
         mock_calc.costed.return_value = mock_decorator
 
         # Patch for_provider to return our mock calculator
-        mocker.patch("tokenx.metrics.CostCalculator.for_provider",
-                     return_value=mock_calc)
+        mocker.patch(
+            "tokenx.metrics.CostCalculator.for_provider", return_value=mock_calc
+        )
 
         # Create a function with the decorator
         @measure_cost(provider="openai", model="gpt-4o")
         def mock_function():
             return {
                 "model": "gpt-4o",
-                "usage": {"prompt_tokens": 100, "completion_tokens": 50}
+                "usage": {"prompt_tokens": 100, "completion_tokens": 50},
             }
 
         # Call the function and check the results

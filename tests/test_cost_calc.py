@@ -1,6 +1,7 @@
 import pytest
 from tokenx.cost_calc import CostCalculator, OpenAICostCalculator
 
+
 class TestCostCalculator:
     def test_provider_factory(self):
         """Test the provider factory method."""
@@ -18,8 +19,9 @@ class TestCostCalculator:
         # Mock the provider's calculate_cost method
         mock_provider = mocker.MagicMock()
         mock_provider.calculate_cost.return_value = 0.001
-        mocker.patch("tokenx.providers.ProviderRegistry.get_provider",
-                    return_value=mock_provider)
+        mocker.patch(
+            "tokenx.providers.ProviderRegistry.get_provider", return_value=mock_provider
+        )
 
         calc = CostCalculator("openai", "gpt-4o")
         cost = calc.calculate_cost(100, 50, 20)
@@ -36,8 +38,9 @@ class TestCostCalculator:
         mock_provider = mocker.MagicMock()
         mock_provider.extract_tokens.return_value = (100, 50, 20)
         mock_provider.calculate_cost.return_value = 0.001
-        mocker.patch("tokenx.providers.ProviderRegistry.get_provider",
-                    return_value=mock_provider)
+        mocker.patch(
+            "tokenx.providers.ProviderRegistry.get_provider", return_value=mock_provider
+        )
 
         calc = CostCalculator("openai", "gpt-4o")
 
@@ -62,8 +65,9 @@ class TestCostCalculator:
         mock_provider = mocker.MagicMock()
         mock_provider.extract_tokens.return_value = (100, 50, 20)
         mock_provider.calculate_cost.return_value = 0.001
-        mocker.patch("tokenx.providers.ProviderRegistry.get_provider",
-                    return_value=mock_provider)
+        mocker.patch(
+            "tokenx.providers.ProviderRegistry.get_provider", return_value=mock_provider
+        )
 
         calc = CostCalculator("openai", "gpt-4o")
 

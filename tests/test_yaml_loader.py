@@ -3,23 +3,21 @@ import yaml
 import tempfile
 from tokenx.yaml_loader import load_yaml_prices
 
+
 class TestYAMLLoader:
     def test_load_multiformat_yaml(self, monkeypatch):
         """Test loading the new multi-provider YAML format."""
 
         # Create a temporary YAML file with the new format
-        with tempfile.NamedTemporaryFile(mode='w+', suffix='.yaml') as tmp:
-            yaml.dump({
-                "openai": {
-                    "gpt-4o": {
-                        "sync": {
-                            "in": 2.50,
-                            "cached_in": 1.25,
-                            "out": 10.0
-                        }
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml") as tmp:
+            yaml.dump(
+                {
+                    "openai": {
+                        "gpt-4o": {"sync": {"in": 2.50, "cached_in": 1.25, "out": 10.0}}
                     }
-                }
-            }, tmp)
+                },
+                tmp,
+            )
             tmp.flush()
 
             # Monkeypatch the YAML path to use our temporary file
@@ -38,8 +36,9 @@ class TestYAMLLoader:
         from tokenx.cost_calc import PRICE_PER_TOKEN
 
         # Verify imported objects have expected structure
-        assert any(model in PRICE_PER_TOKEN for model in
-                  ["gpt-4o", "gpt-3.5-turbo-0125", "o3"])
+        assert any(
+            model in PRICE_PER_TOKEN for model in ["gpt-4o", "gpt-3.5-turbo-0125", "o3"]
+        )
 
         # Check price scaling
         for model, prices in PRICE_PER_TOKEN.items():

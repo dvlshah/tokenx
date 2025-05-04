@@ -3,6 +3,7 @@ OpenAI Provider Adapter Implementation
 
 This module implements the OpenAI provider adapter with enhanced error handling.
 """
+
 from typing import Any, Dict, Optional, Tuple
 
 import tiktoken
@@ -45,10 +46,10 @@ class OpenAIAdapter(ProviderAdapter):
         if "model" in kwargs and isinstance(kwargs["model"], str):
             model = kwargs["model"].lower()
             return (
-                model.startswith("gpt-") or
-                model.startswith("text-") or
-                model.startswith("o") or  # For o1, o3, etc.
-                model in self._prices
+                model.startswith("gpt-")
+                or model.startswith("text-")
+                or model.startswith("o")  # For o1, o3, etc.
+                or model in self._prices
             )
 
         return False
@@ -63,11 +64,7 @@ class OpenAIAdapter(ProviderAdapter):
         Returns:
             dict: Normalized usage data with input_tokens, output_tokens, and cached_tokens
         """
-        result = {
-            "input_tokens": 0,
-            "output_tokens": 0,
-            "cached_tokens": 0
-        }
+        result = {"input_tokens": 0, "output_tokens": 0, "cached_tokens": 0}
 
         # Handle attribute-based access (Pydantic models)
         if hasattr(usage, "__dict__") or hasattr(usage, "__getattr__"):
@@ -99,13 +96,19 @@ class OpenAIAdapter(ProviderAdapter):
         # Handle dictionary-based access
         elif isinstance(usage, dict):
             # Input tokens
-            result["input_tokens"] = usage.get("prompt_tokens", 0) or usage.get("input_tokens", 0)
+            result["input_tokens"] = usage.get("prompt_tokens", 0) or usage.get(
+                "input_tokens", 0
+            )
 
             # Output tokens
-            result["output_tokens"] = usage.get("completion_tokens", 0) or usage.get("output_tokens", 0)
+            result["output_tokens"] = usage.get("completion_tokens", 0) or usage.get(
+                "output_tokens", 0
+            )
 
             # Cached tokens
-            details = usage.get("prompt_tokens_details", {}) or usage.get("input_tokens_details", {})
+            details = usage.get("prompt_tokens_details", {}) or usage.get(
+                "input_tokens_details", {}
+            )
             if isinstance(details, dict):
                 result["cached_tokens"] = details.get("cached_tokens", 0)
 
@@ -142,7 +145,7 @@ class OpenAIAdapter(ProviderAdapter):
                 "Could not extract usage data from response. "
                 "Expected 'usage' attribute or key.",
                 self.provider_name,
-                type(response).__name__
+                type(response).__name__,
             )
 
         # Use normalize_usage to extract token counts
@@ -150,7 +153,7 @@ class OpenAIAdapter(ProviderAdapter):
         return (
             normalized["input_tokens"],
             normalized["output_tokens"],
-            normalized["cached_tokens"]
+            normalized["cached_tokens"],
         )
 
     def detect_model(self, func: Any, args: tuple, kwargs: dict) -> Optional[str]:
@@ -173,8 +176,14 @@ class OpenAIAdapter(ProviderAdapter):
 
         return None
 
-    def calculate_cost(self, model: str, input_tokens: int, output_tokens: int,
-                      cached_tokens: int = 0, tier: str = "sync") -> float:
+    def calculate_cost(
+        self,
+        model: str,
+        input_tokens: int,
+        output_tokens: int,
+        cached_tokens: int = 0,
+        tier: str = "sync",
+    ) -> float:
         """
         Calculate cost in USD based on token usage.
 
@@ -196,7 +205,7 @@ class OpenAIAdapter(ProviderAdapter):
                 f"Price for model={model!r} not found in YAML",
                 self.provider_name,
                 model,
-                available_models=list(self._prices.keys())
+                available_models=list(self._prices.keys()),
             )
 
         if tier not in self._prices[model]:
@@ -205,7 +214,7 @@ class OpenAIAdapter(ProviderAdapter):
                 self.provider_name,
                 model,
                 tier,
-                available_models=list(self._prices.keys())
+                available_models=list(self._prices.keys()),
             )
 
         price = self._prices[model][tier]

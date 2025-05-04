@@ -3,6 +3,7 @@ YAML Loader Module for LLM Meter
 
 Handles loading and scaling of price data from YAML files.
 """
+
 import functools
 from pathlib import Path
 from typing import Dict, Any
@@ -32,9 +33,11 @@ def load_yaml_prices() -> Dict[str, Any]:
         raw = yaml.safe_load(f)
 
     # Check if the YAML is already in the new format
-    if any(isinstance(raw.get(key), dict) and
-           any(isinstance(v, dict) for v in raw[key].values())
-           for key in raw):
+    if any(
+        isinstance(raw.get(key), dict)
+        and any(isinstance(v, dict) for v in raw[key].values())
+        for key in raw
+    ):
         # New format: provider -> model -> tier -> price type -> value
         result = {}
         for provider, models in raw.items():
@@ -47,9 +50,12 @@ def load_yaml_prices() -> Dict[str, Any]:
 
     # Old format: model -> tier -> price type -> value
     # Add "openai" as the provider for backward compatibility
-    return {"openai": {model: {tier: _scale_prices(spec)
-                             for tier, spec in tiers.items()}
-                      for model, tiers in raw.items()}}
+    return {
+        "openai": {
+            model: {tier: _scale_prices(spec) for tier, spec in tiers.items()}
+            for model, tiers in raw.items()
+        }
+    }
 
 
 def _scale_prices(prices: Dict[str, float]) -> Dict[str, float]:
@@ -62,5 +68,4 @@ def _scale_prices(prices: Dict[str, float]) -> Dict[str, float]:
     Returns:
         dict: Scaled prices
     """
-    return {k: (v / 1e6 if v is not None else None)
-            for k, v in prices.items()}
+    return {k: (v / 1e6 if v is not None else None) for k, v in prices.items()}

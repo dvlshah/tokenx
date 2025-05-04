@@ -14,6 +14,7 @@ Dependencies
 ------------
   pip install pyyaml tiktoken
 """
+
 from __future__ import annotations
 
 import functools
@@ -61,17 +62,13 @@ class CostCalculator:
 
         # For OpenAI, return the OpenAICostCalculator for backward compatibility
         if provider_name == "openai":
-            return OpenAICostCalculator(
-                model,
-                tier=tier,
-                enable_caching=enable_caching
-            )
+            return OpenAICostCalculator(model, tier=tier, enable_caching=enable_caching)
 
         return CostCalculator(
             provider_name=provider_name,
             model=model,
             tier=tier,
-            enable_caching=enable_caching
+            enable_caching=enable_caching,
         )
 
     def __init__(
@@ -102,10 +99,7 @@ class CostCalculator:
             raise ValueError(f"Provider {provider_name!r} not found")
 
     def calculate_cost(
-        self,
-        input_tokens: int,
-        output_tokens: int,
-        cached_tokens: int = 0
+        self, input_tokens: int, output_tokens: int, cached_tokens: int = 0
     ) -> float:
         """
         Calculate cost from token counts.
@@ -123,7 +117,7 @@ class CostCalculator:
             input_tokens,
             output_tokens,
             cached_tokens=cached_tokens if self.enable_caching else 0,
-            tier=self.tier
+            tier=self.tier,
         )
 
     def cost_from_usage(self, usage: Dict[str, Any]) -> float:
@@ -177,6 +171,7 @@ class CostCalculator:
         Returns:
             Callable: Decorator function
         """
+
         def decorator(fn: Callable) -> Callable:
             @functools.wraps(fn)
             def wrapper(*args, **kwargs):
@@ -189,12 +184,16 @@ class CostCalculator:
                         raise ValueError("Function did not return usage data")
 
                     cost = self.cost_from_usage(usage_data)
-                    input_tokens, output_tokens, cached_tokens = self.provider.extract_tokens(usage_data)
+                    input_tokens, output_tokens, cached_tokens = (
+                        self.provider.extract_tokens(usage_data)
+                    )
                 else:
                     # Try to extract usage from result
                     cost = self.cost_from_response(result)
-                    input_tokens, output_tokens, cached_tokens = self.provider.extract_tokens(
-                        result.usage if hasattr(result, "usage") else result
+                    input_tokens, output_tokens, cached_tokens = (
+                        self.provider.extract_tokens(
+                            result.usage if hasattr(result, "usage") else result
+                        )
                     )
 
                 return {
@@ -235,7 +234,7 @@ class OpenAICostCalculator(CostCalculator):
             provider_name="openai",
             model=model,
             tier=tier,
-            enable_caching=enable_caching
+            enable_caching=enable_caching,
         )
 
         # Set up the tokenizer for backward compatibility

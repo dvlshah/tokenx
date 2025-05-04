@@ -3,6 +3,7 @@ Provider Registry for LLM Meter
 
 This module handles provider registration and discovery for cost calculation.
 """
+
 from typing import Dict, List, Optional, Any
 import importlib
 import inspect
@@ -57,7 +58,9 @@ class ProviderRegistry:
         return list(cls._providers.values())
 
     @classmethod
-    def detect_provider(cls, func: Any, args: tuple, kwargs: dict) -> Optional[ProviderAdapter]:
+    def detect_provider(
+        cls, func: Any, args: tuple, kwargs: dict
+    ) -> Optional[ProviderAdapter]:
         """
         Auto-detect the provider based on the function and its arguments.
 
@@ -101,10 +104,11 @@ class ProviderRegistry:
                 # Find all provider adapter classes
                 for _, obj in inspect.getmembers(module):
                     # Check if it's a class that inherits from ProviderAdapter
-                    if (inspect.isclass(obj) and
-                        issubclass(obj, ProviderAdapter) and
-                        obj is not ProviderAdapter):
-
+                    if (
+                        inspect.isclass(obj)
+                        and issubclass(obj, ProviderAdapter)
+                        and obj is not ProviderAdapter
+                    ):
                         # Check if there's a creator function available
                         creator_func_name = f"create_{name}_adapter"
                         if hasattr(module, creator_func_name):

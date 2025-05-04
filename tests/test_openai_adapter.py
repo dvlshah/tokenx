@@ -3,10 +3,12 @@ Fixed test file for the OpenAI adapter.
 
 This file tests the OpenAI adapter functionality with correct import paths.
 """
+
 from unittest.mock import MagicMock, patch
 
 # Fix: Use absolute imports instead of relative imports
 from tokenx.providers.openai import OpenAIAdapter
+
 
 class TestOpenAIAdapter:
     def setup_method(self):
@@ -15,17 +17,21 @@ class TestOpenAIAdapter:
 
     def test_matches_function(self):
         """Test detection of OpenAI functions."""
+
         # Test module name matching
-        def mock_openai_fn(): pass
+        def mock_openai_fn():
+            pass
+
         mock_openai_fn.__module__ = "openai.chat_completions"
         assert self.adapter.matches_function(mock_openai_fn, (), {})
 
         # Test model name matching
-        assert self.adapter.matches_function(lambda: None, (),
-                                           {"model": "gpt-4o"})
+        assert self.adapter.matches_function(lambda: None, (), {"model": "gpt-4o"})
 
         # Test negative case
-        def mock_non_openai_fn(): pass
+        def mock_non_openai_fn():
+            pass
+
         mock_non_openai_fn.__module__ = "anthropic.api"
         assert not self.adapter.matches_function(mock_non_openai_fn, (), {})
 
@@ -35,9 +41,11 @@ class TestOpenAIAdapter:
         mock_usage = {
             "prompt_tokens": 100,
             "completion_tokens": 50,
-            "prompt_tokens_details": {"cached_tokens": 20}
+            "prompt_tokens_details": {"cached_tokens": 20},
         }
-        input_tokens, output_tokens, cached_tokens = self.adapter.extract_tokens(mock_usage)
+        input_tokens, output_tokens, cached_tokens = self.adapter.extract_tokens(
+            mock_usage
+        )
         assert input_tokens == 100
         assert output_tokens == 50
         assert cached_tokens == 20
@@ -48,7 +56,7 @@ class TestOpenAIAdapter:
                 self.usage = {
                     "prompt_tokens": 100,
                     "completion_tokens": 50,
-                    "prompt_tokens_details": {"cached_tokens": 20}
+                    "prompt_tokens_details": {"cached_tokens": 20},
                 }
 
             # Add get method to mock dict-like behavior
@@ -57,7 +65,9 @@ class TestOpenAIAdapter:
                     return self.usage
                 return default
 
-        input_tokens, output_tokens, cached_tokens = self.adapter.extract_tokens(MockResponse())
+        input_tokens, output_tokens, cached_tokens = self.adapter.extract_tokens(
+            MockResponse()
+        )
         assert input_tokens == 100
         assert output_tokens == 50
         assert cached_tokens == 20
@@ -68,7 +78,7 @@ class TestOpenAIAdapter:
         usage_dict = {
             "prompt_tokens": 100,
             "completion_tokens": 50,
-            "prompt_tokens_details": {"cached_tokens": 20}
+            "prompt_tokens_details": {"cached_tokens": 20},
         }
         normalized = self.adapter._normalize_usage(usage_dict)
         assert normalized["input_tokens"] == 100
@@ -101,7 +111,7 @@ class TestOpenAIAdapter:
         model = self.adapter.detect_model(None, (MagicMock(model="gpt-4o"),), {})
         assert model is None
 
-    @patch('tokenx.providers.openai.tiktoken.encoding_for_model')
+    @patch("tokenx.providers.openai.tiktoken.encoding_for_model")
     def test_get_encoding_for_model(self, mock_encoding):
         """Test getting encoding for a known model."""
         mock_encoding.return_value = "encoding"
@@ -109,7 +119,7 @@ class TestOpenAIAdapter:
         mock_encoding.assert_called_with("gpt-4o")
         assert encoding == "encoding"
 
-    @patch('tokenx.providers.openai.load_yaml_prices')
+    @patch("tokenx.providers.openai.load_yaml_prices")
     def test_calculate_cost(self, mock_load_prices):
         """Test cost calculation with proper pricing."""
         # Mock the pricing data
@@ -119,7 +129,7 @@ class TestOpenAIAdapter:
                     "sync": {
                         "in": 0.00000250,  # per token
                         "cached_in": 0.00000125,  # per token
-                        "out": 0.00001000  # per token
+                        "out": 0.00001000,  # per token
                     }
                 }
             }
@@ -130,16 +140,13 @@ class TestOpenAIAdapter:
 
         # Calculate cost
         cost = adapter.calculate_cost(
-            "gpt-4o",
-            input_tokens=100,
-            output_tokens=50,
-            cached_tokens=20
+            "gpt-4o", input_tokens=100, output_tokens=50, cached_tokens=20
         )
 
         # Verify cost calculation
         expected_cost = (
-            (100 - 20) * 0.00000250 +  # uncached input tokens
-            20 * 0.00000125 +           # cached input tokens
-            50 * 0.00001000             # output tokens
+            (100 - 20) * 0.00000250  # uncached input tokens
+            + 20 * 0.00000125  # cached input tokens
+            + 50 * 0.00001000  # output tokens
         )
         assert cost == expected_cost

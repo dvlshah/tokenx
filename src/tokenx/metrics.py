@@ -11,6 +11,7 @@ an LLM provider response object (sync **or** async):
 - Decorators are order-agnostic; they merge their keys in the returned
   tuple: (response, metrics_dict).
 """
+
 from __future__ import annotations
 
 import functools
@@ -20,7 +21,7 @@ from typing import Any, Callable, Dict, Tuple, Union
 
 from .cost_calc import CostCalculator
 
-ResponseT = Any                              # Provider response object type alias
+ResponseT = Any  # Provider response object type alias
 ReturnT = Union[ResponseT, Tuple[ResponseT, Dict[str, Any]]]
 
 
@@ -88,6 +89,7 @@ def measure_cost(
     enable_caching : bool, optional
         Whether to discount cached tokens
     """
+
     def decorator(fn: Callable) -> Callable:
         is_async = inspect.iscoroutinefunction(fn)
 

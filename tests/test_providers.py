@@ -1,6 +1,7 @@
 from tokenx.providers import ProviderRegistry
 from tokenx.providers.openai import OpenAIAdapter
 
+
 class TestProviderRegistry:
     def test_provider_registration(self):
         """Test that providers can be registered and retrieved."""
@@ -17,8 +18,11 @@ class TestProviderRegistry:
 
     def test_provider_detection(self):
         """Test detection of providers from function calls."""
+
         # Mock OpenAI function
-        def mock_openai_fn(): pass
+        def mock_openai_fn():
+            pass
+
         mock_openai_fn.__module__ = "openai.api_resources"
 
         provider = ProviderRegistry.detect_provider(

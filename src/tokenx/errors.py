@@ -4,30 +4,37 @@ Error handling module for tokenx.
 This module defines exception classes and utilities for error handling
 across all provider adapters in tokenx.
 """
+
 from typing import Any, Callable, List, Optional, Tuple
 
 
 class LLMMeterError(Exception):
     """Base exception for all tokenx errors."""
+
     pass
 
 
 class ProviderError(LLMMeterError):
     """Base exception for provider-related errors."""
+
     pass
 
 
 class TokenExtractionError(ProviderError):
     """Exception raised when token extraction fails."""
 
-    def __init__(self, message: str, provider: str, response_type: Optional[str] = None):
+    def __init__(
+        self, message: str, provider: str, response_type: Optional[str] = None
+    ):
         self.provider = provider
         self.response_type = response_type
 
         # Enhance message with provider info
         enhanced_message = f"[{provider}] {message}"
         if response_type:
-            enhanced_message = f"[{provider}] [Response type: {response_type}] {message}"
+            enhanced_message = (
+                f"[{provider}] [Response type: {response_type}] {message}"
+            )
 
         super().__init__(enhanced_message)
 
@@ -35,12 +42,14 @@ class TokenExtractionError(ProviderError):
 class PricingError(ProviderError):
     """Exception raised when pricing information is not available."""
 
-    def __init__(self,
-                 message: str,
-                 provider: str,
-                 model: Optional[str] = None,
-                 tier: Optional[str] = None,
-                 available_models: Optional[List[str]] = None):
+    def __init__(
+        self,
+        message: str,
+        provider: str,
+        model: Optional[str] = None,
+        tier: Optional[str] = None,
+        available_models: Optional[List[str]] = None,
+    ):
         self.provider = provider
         self.model = model
         self.tier = tier
@@ -93,7 +102,9 @@ class TokenCountingError(ProviderError):
 
 
 # Fallback utilities
-def extract_tokens_with_fallbacks(extract_func: Callable, response: Any, provider_name: str) -> Tuple[int, int, int]:
+def extract_tokens_with_fallbacks(
+    extract_func: Callable, response: Any, provider_name: str
+) -> Tuple[int, int, int]:
     """
     Extract tokens from a response with multiple fallback strategies.
 
@@ -137,10 +148,18 @@ def extract_tokens_with_fallbacks(extract_func: Callable, response: Any, provide
             if hasattr(response, "choices") and response.choices:
                 # Estimate tokens from content length for output tokens
                 content = ""
-                if hasattr(response.choices[0], "message") and hasattr(response.choices[0].message, "content"):
+                if hasattr(response.choices[0], "message") and hasattr(
+                    response.choices[0].message, "content"
+                ):
                     content = response.choices[0].message.content
-                elif isinstance(response.choices[0], dict) and "message" in response.choices[0]:
-                    if isinstance(response.choices[0]["message"], dict) and "content" in response.choices[0]["message"]:
+                elif (
+                    isinstance(response.choices[0], dict)
+                    and "message" in response.choices[0]
+                ):
+                    if (
+                        isinstance(response.choices[0]["message"], dict)
+                        and "content" in response.choices[0]["message"]
+                    ):
                         content = response.choices[0]["message"]["content"]
 
                 # Rough estimate (4 chars ≈ 1 token)
@@ -150,7 +169,9 @@ def extract_tokens_with_fallbacks(extract_func: Callable, response: Any, provide
                 input_tokens = 0
                 if hasattr(response, "prompt_tokens"):
                     input_tokens = response.prompt_tokens
-                elif hasattr(response, "usage") and hasattr(response.usage, "prompt_tokens"):
+                elif hasattr(response, "usage") and hasattr(
+                    response.usage, "prompt_tokens"
+                ):
                     input_tokens = response.usage.prompt_tokens
                 elif isinstance(response, dict):
                     if "prompt_tokens" in response:
@@ -158,7 +179,11 @@ def extract_tokens_with_fallbacks(extract_func: Callable, response: Any, provide
                     elif "usage" in response and "prompt_tokens" in response["usage"]:
                         input_tokens = response["usage"]["prompt_tokens"]
 
-                return (input_tokens, output_tokens, 0)  # Assume no cached tokens in fallback
+                return (
+                    input_tokens,
+                    output_tokens,
+                    0,
+                )  # Assume no cached tokens in fallback
         except Exception:
             pass
 
@@ -202,22 +227,30 @@ def enhance_provider_adapter(adapter: Any) -> Any:
     original_extract_tokens = adapter.extract_tokens
 
     def enhanced_extract_tokens(response: Any) -> Tuple[int, int, int]:
-        return extract_tokens_with_fallbacks(original_extract_tokens, response, provider_name)
+        return extract_tokens_with_fallbacks(
+            original_extract_tokens, response, provider_name
+        )
 
     adapter.extract_tokens = enhanced_extract_tokens
 
     # Enhance calculate_cost method
     original_calculate_cost = adapter.calculate_cost
 
-    def enhanced_calculate_cost(model: str,
-                              input_tokens: int,
-                              output_tokens: int,
-                              cached_tokens: int = 0,
-                              tier: str = "sync") -> float:
+    def enhanced_calculate_cost(
+        model: str,
+        input_tokens: int,
+        output_tokens: int,
+        cached_tokens: int = 0,
+        tier: str = "sync",
+    ) -> float:
         try:
-            return original_calculate_cost(model, input_tokens, output_tokens, cached_tokens, tier)
+            return original_calculate_cost(
+                model, input_tokens, output_tokens, cached_tokens, tier
+            )
         except ValueError as e:
-            available_models = list(adapter._prices.keys()) if hasattr(adapter, "_prices") else []
+            available_models = (
+                list(adapter._prices.keys()) if hasattr(adapter, "_prices") else []
+            )
 
             if "not found in YAML" in str(e):
                 # Enhance the pricing error message
@@ -229,7 +262,9 @@ def enhance_provider_adapter(adapter: Any) -> Any:
                     f"- Update your model_prices.yaml with the latest pricing\n"
                     f"- Consider using a similar model with known pricing"
                 )
-                raise PricingError(error_msg, provider_name, model, tier, available_models) from e
+                raise PricingError(
+                    error_msg, provider_name, model, tier, available_models
+                ) from e
             raise
 
     adapter.calculate_cost = enhanced_calculate_cost

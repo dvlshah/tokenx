@@ -6,7 +6,6 @@ for the OpenAI provider adapter.
 """
 
 
-
 def test_error_handling():
     """Test the enhanced error handling for provider adapters."""
     from tokenx.providers.openai import create_openai_adapter
@@ -48,7 +47,9 @@ def test_error_handling():
             self.usage = UsageWithAttribute()
 
     try:
-        input_tokens, output_tokens, cached_tokens = adapter.extract_tokens(ResponseWithUsageAttribute())
+        input_tokens, output_tokens, cached_tokens = adapter.extract_tokens(
+            ResponseWithUsageAttribute()
+        )
         print("✅ Successfully extracted tokens from Pydantic-like response:")
         print(f"   Input tokens: {input_tokens}")
         print(f"   Output tokens: {output_tokens}")
@@ -63,14 +64,14 @@ def test_error_handling():
         "usage": {
             "prompt_tokens": 200,
             "completion_tokens": 100,
-            "prompt_tokens_details": {
-                "cached_tokens": 50
-            }
+            "prompt_tokens_details": {"cached_tokens": 50},
         }
     }
 
     try:
-        input_tokens, output_tokens, cached_tokens = adapter.extract_tokens(response_dict)
+        input_tokens, output_tokens, cached_tokens = adapter.extract_tokens(
+            response_dict
+        )
         print("✅ Successfully extracted tokens from dictionary response:")
         print(f"   Input tokens: {input_tokens}")
         print(f"   Output tokens: {output_tokens}")

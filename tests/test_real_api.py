@@ -1,10 +1,12 @@
 import pytest
 import os
 
+
 class TestRealAPIs:
     @pytest.mark.skipif(
-        "OPENAI_API_KEY" not in os.environ or pytest.importorskip("openai", reason="OpenAI SDK not installed") is None,
-        reason="No OpenAI API key provided or OpenAI SDK not installed"
+        "OPENAI_API_KEY" not in os.environ
+        or pytest.importorskip("openai", reason="OpenAI SDK not installed") is None,
+        reason="No OpenAI API key provided or OpenAI SDK not installed",
     )
     def test_openai_api_integration(self):
         """Test with real OpenAI API calls."""
@@ -12,12 +14,14 @@ class TestRealAPIs:
         from tokenx.metrics import measure_latency, measure_cost
 
         @measure_latency
-        @measure_cost(provider="openai", model="gpt-3.5-turbo")  # Explicitly specify provider and model
+        @measure_cost(
+            provider="openai", model="gpt-3.5-turbo"
+        )  # Explicitly specify provider and model
         def call_openai():
             client = openai.OpenAI()
             return client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": "Hello, world!"}]
+                messages=[{"role": "user", "content": "Hello, world!"}],
             )
 
         # Verify response and metrics
