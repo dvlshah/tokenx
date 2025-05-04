@@ -1,26 +1,18 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="tokenX logo" width="280">
+  <img src="docs/assets/logo.png" alt="tokenX logo" width="260">
 </p>
 
-<h1 align="center">🧮 tokenx-core</h1>
-<p align="center"><em>Instant cost&nbsp;•&nbsp;Instant latency&nbsp;•&nbsp;Zero code refactor</em></p>
-
-<p align="center"><strong>👉 Like what you see?&nbsp;<a href="https://github.com/dvlshah/tokenx/stargazers">Star the repo</a> &nbsp;and&nbsp;<a href="https://github.com/dvlshah">follow @dvlshah</a> for updates!</strong></p>
-
+<p align="center"><em>Track cost and latency of your LLM calls </em></p>
 
 <p align="center">
-  <a href="https://pypi.org/project/tokenx-core/"><img alt="PyPI" src="https://img.shields.io/pypi/v/tokenx-core?color=blue"></a>
-  <a href="https://github.com/dvlshah/tokenx/actions/workflows/test.yml"><img alt="CI" src="https://github.com/dvlshah/tokenx/actions/workflows/test.yml/badge.svg?branch=main"></a>
-  <a href="https://pypi.org/project/tokenx-core/"><img alt="Python Versions" src="https://img.shields.io/pypi/pyversions/tokenx-core"></a>
-  <a href="https://opensource.org/licenses/MIT"><img alt="License" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
-  <!-- <a href="https://codecov.io/gh/dvlshah/tokenx"><img alt="Coverage" src="https://img.shields.io/codecov/c/github/dvlshah/tokenx"></a> -->
-  <a href="https://pypi.org/project/tokenx-core/"><img alt="Downloads" src="https://img.shields.io/pypi/dm/tokenx-core"></a>
-  <!-- <a href="https://github.com/dvlshah/tokenx/discussions"><img alt="Chat" src="https://img.shields.io/badge/Chat-Discussions-ff69b4?logo=github"></a> -->
+  <a href="https://pypi.org/project/tokenx-core/"><img src="https://img.shields.io/pypi/v/tokenx-core?logo=pypi&label=pypi" alt="PyPI version"></a>
+  <a href="https://github.com/dvlshah/tokenx/actions/workflows/test.yml"><img src="https://github.com/dvlshah/tokenx/actions/workflows/test.yml/badge.svg?branch=main" alt="CI status"></a>
+  <!-- <a href="https://codecov.io/gh/dvlshah/tokenx"><img src="https://img.shields.io/codecov/c/github/dvlshah/tokenx?logo=codecov" alt="Coverage"></a> -->
+  <a href="https://pypi.org/project/tokenx-core/"><img src="https://img.shields.io/pypi/pyversions/tokenx-core?logo=python&label=python" alt="Python versions"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT license"></a>
 </p>
-> Plug-and-play decorators for tracking **cost** & **latency** of LLM API calls.
 
-tokenx provides a simple way to monitor the cost and performance of your LLM integrations without changing your existing code. Just add decorators to your API call functions and get detailed metrics automatically.
-
+<p align="center"><strong>👉 Like what you see?&nbsp;<a href="https://github.com/dvlshah/tokenx/stargazers">Star the repo</a> &nbsp;and&nbsp;<a href="https://github.com/dvlshah">follow @dvlshah</a> for updates!</strong></p>
 
 > **Decorator in → Metrics out.**
 > Monitor cost & latency of any LLM function without touching its body.
@@ -62,14 +54,17 @@ Integrating with LLM APIs often involves hidden costs and variable performance. 
 
 ```mermaid
 flowchart LR
-    subgraph user["Your code"]
-        F((API call))
-    end
-    F -->|decorators| D[tokenx wrapper]
-    D -- cost --> C[CostCalculator]
-    D -- latency --> L[Latency Timer]
-    C -- lookup --> Y[model_prices.yaml]
-    D -->|metrics| M[Structured JSON → stdout / exporter]
+  %% --- subgraph: user's code ---
+  subgraph User_Code
+    A["API call"]
+  end
+
+  %% --- main pipeline ---
+  A -- decorators -->   B["tokenx wrapper"]
+  B -- cost      -->   C["Cost Calculator"]
+  B -- latency   -->   D["Latency Timer"]
+  C -- lookup    -->   E["model_prices.yaml"]
+  B -- metrics   -->   F["Structured JSON (stdout / exporter)"]
 ```
 
 *No vendor lock‑in:*  pure‑Python wrapper emits plain dicts—pipe them to Prometheus, Datadog, or stdout.
@@ -187,27 +182,6 @@ async def main():
     print(metrics)
 
 # asyncio.run(main()) # Example of how to run it
-```
-
-### Direct Cost Calculation
-
-For advanced use cases, you can calculate costs directly:
-
-```python
-from tokenx.cost_calc import CostCalculator
-
-# Create a calculator for a specific provider and model
-calc = CostCalculator.for_provider("openai", "gpt-4o")
-
-# Calculate cost from token counts
-cost = calc.calculate_cost(
-    input_tokens=100,
-    output_tokens=50,
-    cached_tokens=20
-)
-
-# Calculate cost from response object
-cost = calc.cost_from_response(response)
 ```
 
 ---
