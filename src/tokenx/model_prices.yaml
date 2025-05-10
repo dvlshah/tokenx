@@ -131,3 +131,65 @@ openai:
       in:        0.50     # USD per 1M tokens
       cached_in: 0.25     # 50 % discount
       out:       1.50
+
+anthropic:
+  claude-3-opus-20240229:
+    sync:
+      in: 15.00
+      cached_in: 18.75
+      cached_hit: 1.50
+      out: 75.00
+  claude-3-5-sonnet-20240620:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_hit: 0.30
+      out: 15.00
+  claude-3-5-sonnet-20241022:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_hit: 0.30
+      out: 15.00
+  claude-3-5-sonnet-latest:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_hit: 0.30
+      out: 15.00
+  claude-3-sonnet-20240229:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_hit: 0.30
+      out: 15.00
+  claude-3-haiku-20240307:
+    sync:
+      in: 0.25
+      cached_in: 0.30
+      cached_hit: 0.03
+      out: 1.25
+  claude-3-5-haiku-20240307:
+    sync:
+      in: 0.80
+      cached_in: 1.00
+      cached_hit: 0.08
+      out: 4.00
+  claude-3-5-haiku-latest:
+    sync:
+      in: 0.80
+      cached_in: 1.00
+      cached_hit: 0.08
+      out: 4.00
+  claude-3-7-sonnet-20250219:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_hit: 0.30
+      out: 15.00
+  claude-3-7-sonnet-latest:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_hit: 0.30
+      out: 15.00

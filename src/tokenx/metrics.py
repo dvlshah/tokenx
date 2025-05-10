@@ -76,7 +76,8 @@ def measure_cost(
     enable_caching: bool = True,
 ) -> Callable:
     """
-    Adds `cost_usd` and token counts to .metrics by analyzing response.usage.
+    Adds `cost_usd` and token counts to .metrics by analyzing response usage.
+    Includes provider-specific cache metrics if available.
 
     Parameters
     ----------
@@ -87,7 +88,7 @@ def measure_cost(
     tier : str, optional
         Pricing tier, e.g., "sync" or "flex"
     enable_caching : bool, optional
-        Whether to discount cached tokens
+        Whether to discount cached tokens if provider supports it.
     """
 
     def decorator(fn: Callable) -> Callable:
@@ -103,20 +104,66 @@ def measure_cost(
             )
 
         def get_cost_metrics(resp, calculator):
-            # Cost is calculated by the provider adapter
+            # Cost is calculated by the provider adapter.
             cost_metrics = calculator.costed()(lambda: resp)()
-            # Add cost_usd for backward compatibility
             cost_metrics["cost_usd"] = cost_metrics["usd"]
+
+            # Add provider-specific metrics if the adapter supports extracting them
+            if (
+                hasattr(calculator.provider, "_extract_anthropic_usage_fields")
+                and provider == "anthropic"
+            ):
+                try:
+                    # Need to extract usage data first to pass to _extract_anthropic_usage_fields
+                    usage_data = None
+                    if hasattr(resp, "usage"):
+                        usage_data = resp.usage
+                    elif isinstance(resp, dict) and "usage" in resp:
+                        usage_data = resp["usage"]
+                    # Handle top-level token counts if usage data is not nested
+                    elif hasattr(resp, "input_tokens") and hasattr(
+                        resp, "output_tokens"
+                    ):
+                        usage_data = resp
+                    elif (
+                        isinstance(resp, dict)
+                        and "input_tokens" in resp
+                        and "output_tokens" in resp
+                    ):
+                        usage_data = resp
+
+                    if usage_data is not None:
+                        anthropic_fields = (
+                            calculator.provider._extract_anthropic_usage_fields(
+                                usage_data
+                            )
+                        )
+                        # Add relevant Anthropic-specific cache metrics
+                        # cache_read_input_tokens is already mapped to 'cached_tokens'
+                        cost_metrics["cache_creation_input_tokens"] = (
+                            anthropic_fields.get("cache_creation_input_tokens", 0)
+                        )
+                        # We could add cache_read_input_tokens explicitly too, but it's redundant with 'cached_tokens'
+                        # cost_metrics["anthropic_cache_read_input_tokens"] = anthropic_fields.get("cache_read_input_tokens", 0)
+
+                except Exception as e:
+                    # Log a warning if extraction of extra fields fails, but don't crash
+                    print(
+                        f"Warning: Could not extract extra Anthropic cache metrics: {e}"
+                    )
+
             return cost_metrics
 
         async def _aw(*args, **kwargs):
             calculator = get_calculator()
             resp = await fn(*args, **kwargs)
+            # Pass the original response object to get_cost_metrics
             return _merge_metrics(resp, **get_cost_metrics(resp, calculator))
 
         def _sync(*args, **kwargs):
             calculator = get_calculator()
             resp = fn(*args, **kwargs)
+            # Pass the original response object to get_cost_metrics
             return _merge_metrics(resp, **get_cost_metrics(resp, calculator))
 
         return functools.wraps(fn)(_aw if is_async else _sync)
