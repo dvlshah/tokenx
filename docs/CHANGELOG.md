@@ -1,6 +1,26 @@
 # Changelog
 
-All notable changes to the tokenx project will be documented in this file.
+## [0.2.6] - 2025-05-10
+
+### Added
+- **Anthropic Provider Support**:
+    - Full cost and latency tracking for Anthropic Claude models.
+    - Integration with Anthropic's Messages API.
+    - Extraction of Anthropic's prompt caching beta metrics:
+        - `cache_read_input_tokens` is mapped to `cached_tokens` in the metrics output and used for potential cost discounts if a `cached_in` price is defined.
+        - `cache_creation_input_tokens` is added directly to the metrics output.
+    - Requires users to enable the Anthropic beta client (e.g., `client.beta`) and use `cache_control` in messages to receive cache metrics.
+    - Updated Anthropic model pricing to `model_prices.yaml`.
+- New unit tests for the Anthropic adapter, including caching scenarios.
+
+### Changed
+- Updated `README.md` provider compatibility matrix and feature list.
+- `measure_cost` decorator now includes `cache_creation_input_tokens` in the metrics dictionary for Anthropic calls when available.
+- Refined `extract_tokens_with_fallbacks` in `src/tokenx/errors.py` to better handle provider-specific `TokenExtractionError`s and improve fallback logic.
+- Ensured `cost_usd` key is consistently present in the metrics output from `measure_cost` for backward compatibility.
+
+### Fixed
+- Corrected test assertions for Anthropic adapter related to default cached token values.
 
 ## [0.2.0] - 2025-05-03
 

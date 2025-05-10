@@ -1,6 +1,6 @@
 [project]
 name            = "tokenx-core"
-version         = "0.2.4"
+version         = "0.2.5"
 description     = "Cross-provider LLM token tracking and cost calculation"
 authors         = [{ name = "Deval Shah", email = "deval@neurink.ai" }]
 license         = { file = "LICENSE" }
@@ -41,7 +41,8 @@ dev = [
   "pytest-cov",
   "pytest-mock",
   "pytest-asyncio",  # Added for async tests
-  "ruff"
+  "ruff",
+  "pre-commit"
 ]
 
 # Provider-specific dependencies
@@ -66,6 +67,8 @@ markers = [
   "asyncio: marks tests that use async/await syntax",
   "real_api: marks tests requiring live API keys and network access",
 ]
+
+asyncio_default_fixture_loop_scope = "function"
 
 [build-system]
 requires = ["setuptools>=42", "wheel"]

@@ -13,7 +13,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT license"></a>
 </p>
 
-<p align="center"><strong>👉 Like what you see?&nbsp;<a href="https://github.com/dvlshah/tokenx/stargazers">Star the repo</a> &nbsp;and&nbsp;<a href="https://github.com/dvlshah">follow @dvlshah</a> for updates!</strong></p>
+<p align="center"><strong>👉 Like what you see? <a href="https://github.com/dvlshah/tokenx/stargazers">Star the repo</a>  and <a href="https://github.com/dvlshah">follow @dvlshah</a> for updates!</strong></p>
 
 > **Decorator in → Metrics out.**
 > Monitor cost & latency of any LLM function without touching its body.
@@ -87,7 +87,9 @@ flowchart LR
 
 ```bash
 pip install tokenx-core                 # stable
-pip install tokenx-core[openai]         # with provider extras
+pip install tokenx-core[openai]         # with OpenAI provider extras
+pip install tokenx-core[anthropic]      # with Anthropic provider extras
+pip install tokenx-core[all]            # with all provider extras
 ```
 
 ---
@@ -116,6 +118,36 @@ print(f"Cost: ${metrics['cost_usd']:.6f}")
 print(f"Latency: {metrics['latency_ms']:.2f}ms")
 print(f"Tokens: {metrics['input_tokens']} in, {metrics['output_tokens']} out")
 print(f"Cached tokens: {metrics['cached_tokens']}")  # New in v0.2.0
+```
+
+Here's how to monitor your Anthropic API calls with just two lines of code:
+
+```python
+from tokenx.metrics import measure_cost, measure_latency
+from anthropic import Anthropic # Or AsyncAnthropic
+
+@measure_latency
+@measure_cost(provider="anthropic", model="claude-3-haiku-20240307")
+def call_anthropic(prompt: str):
+    # For Anthropic prompt caching metrics, initialize client with .beta
+    # and use 'cache_control' in your messages.
+    # Example: client = Anthropic(api_key="YOUR_KEY").beta
+    client = Anthropic() # Standard client
+    return client.messages.create(
+        model="claude-3-haiku-20240307", # Ensure model matches decorator
+        max_tokens=150,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+response_claude, metrics_claude = call_anthropic("Why is the sky blue?")
+print(f"Cost: ${metrics_claude['cost_usd']:.6f} USD")
+print(f"Latency: {metrics_claude['latency_ms']:.2f} ms")
+print(f"Input Tokens: {metrics_claude['input_tokens']}")
+print(f"Output Tokens: {metrics_claude['output_tokens']}")
+# For Anthropic, 'cached_tokens' reflects 'cache_read_input_tokens'.
+# 'cache_creation_input_tokens' will also be in metrics if caching beta is active.
+print(f"Cached (read) tokens: {metrics_claude.get('cached_tokens', 0)}")
+print(f"Cache creation tokens: {metrics_claude.get('cache_creation_input_tokens', 'N/A (requires caching beta)')}")```
 ```
 
 ## 🔍 Detailed Usage
@@ -191,23 +223,25 @@ async def main():
 
 tokenx is designed to work with multiple LLM providers. Here's the current compatibility matrix:
 
-| Provider | Status | SDK Version | Response Formats | Models |
-|----------|--------|-------------|-----------------|--------|
-| OpenAI | ✅ | >= 1.0.0 | Dict, Pydantic | All models (GPT-4, GPT-3.5, etc.) |
-| Anthropic | 🔜 | - | - | Claude models (coming soon) |
-| Google | 🔜 | - | - | Gemini models (coming soon) |
+| Provider | Status | SDK Version | Response Formats | Models | Cache Metrics Support |
+|----------|--------|-------------|-----------------|--------|-----------------------|
+| OpenAI | ✅ | >= 1.0.0 | Dict, Pydantic | All models (GPT-4, GPT-3.5, etc.) | ✅ (cached_tokens) |
+| Anthropic | ✅ | >= 0.20.0 (approx for cache beta fields) | Dict, Pydantic-like | Claude models (Claude 3 Opus, Sonnet, Haiku) | ✅ (Prompt Caching Beta via cached_tokens & cache_creation_input_tokens) |
+| Google | 🔜 | - | - | Gemini models (coming soon) | - |
 
 ### OpenAI Support Details
 
-- **SDK Versions**: Compatible with OpenAI Python SDK v1.0.0 and newer
-- **Response Formats**:
-  - Dictionary responses from older SDK versions
-  - Pydantic model responses from newer SDK versions
-  - Cached token extraction from `prompt_tokens_details.cached_tokens`
-- **API Types**:
-  - Chat Completions API
-  - Traditional Completions API
-  - Support for the newer Responses API coming soon
+- **SDK Versions**: Compatible with OpenAI Python SDK v1.0.0 and newer.
+- **Response Formats**: Supports dictionary responses from older SDK versions and Pydantic model responses from newer SDK versions, with cached token extraction from `prompt_tokens_details.cached_tokens`.
+- **API Types**: Supports Chat Completions API and Traditional Completions API, with support for the newer Responses API coming soon.
+
+### Anthropic Support Details
+
+- **SDK Versions**: Compatible with Anthropic Python SDK (e.g., v0.20.0+ for full prompt caching beta fields).
+- **Response Formats**: Supports Pydantic-like response objects.
+- **Token Extraction**: Extracts input_tokens and output_tokens from the usage object.
+- **Caching (Prompt Caching Beta)**: To utilize Anthropic's prompt caching and see related metrics, enable the beta feature in your client (`client = Anthropic().beta`) and define `cache_control` checkpoints in messages. tokenx maps `cache_read_input_tokens` to `cached_tokens` (for cost discounts if `cached_in` is defined) and includes `cache_creation_input_tokens` directly in metrics.
+- **API Types**: Supports Messages API.
 
 ## 🛠️ Advanced Configuration
 
@@ -220,8 +254,16 @@ openai:
   gpt-4o:
     sync:
       in: 2.50        # USD per million input tokens
-      cached_in: 1.25 # USD per million cached tokens
+      cached_in: 1.25 # USD per million cached tokens (OpenAI specific)
       out: 10.00      # USD per million output tokens
+anthropic:
+  claude-3-haiku-20240307:
+    sync:
+      in: 0.25        # USD per million input tokens
+      # cached_in: 0.10 # Example: if Anthropic offered a specific rate for cache_read_input_tokens
+      out: 1.25       # USD per million output tokens
+  # If 'cached_in' is not specified for an Anthropic model,
+  # all input_tokens (including cache_read_input_tokens) are billed at the 'in' rate.
 ```
 
 ### Error Handling
@@ -257,6 +299,25 @@ When you use the decorators, you'll get a structured metrics dictionary:
 }
 ```
 
+For Anthropic (when prompt caching beta is active and cache is utilized):
+
+```python
+{
+    "provider": "anthropic",
+    "model": "claude-3-haiku-20240307",
+    "tier": "sync",
+    "input_tokens": 25,                     # Total input tokens for the request
+    "output_tokens": 60,
+    "cached_tokens": 10,                    # Populated from Anthropic's 'cache_read_input_tokens'
+    "cache_creation_input_tokens": 15,      # Anthropic's 'cache_creation_input_tokens'
+    "cost_usd": 0.0000XX,
+    "usd": 0.0000XX,
+    "latency_ms": 750.21
+}
+```
+
+If Anthropic's prompt caching beta is not used or no cache interaction occurs, cached_tokens will be 0 and cache_creation_input_tokens might be 0 or absent.
+
 ## 🤝 Contributing
 
 ```bash
@@ -266,13 +327,13 @@ pip install -e .[dev]   # or `poetry install`
 pytest -q && mypy src/
 ```
 
-See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for details.
+See [CONTRIBUTING.md](https://github.com/dvlshah/tokenx/blob/main/docs/CONTRIBUTING.md) for details.
 
 ---
 
 ## 📝 Changelog
 
-See [CHANGELOG.md](docs/CHANGELOG.md) for full history.
+See [CHANGELOG.md](https://github.com/dvlshah/tokenx/blob/main/docs/CHANGELOG.md) for full history.
 
 ---
 
