@@ -10,9 +10,7 @@ def adapter():
     with patch("tokenx.providers.gemini.load_yaml_prices") as mock_load:
         mock_load.return_value = {
             "gemini": {
-                "gemini-test-model": {
-                    "sync": {"in": 1.0, "cached_in": 0.5, "out": 2.0}
-                }
+                "gemini-test-model": {"sync": {"in": 1.0, "cached_in": 0.5, "out": 2.0}}
             }
         }
         yield create_gemini_adapter()
@@ -63,8 +61,7 @@ class TestGeminiAdapter:
 
     def test_detect_model(self, adapter):
         assert (
-            adapter.detect_model(None, (), {"model_name": "gemini-pro"})
-            == "gemini-pro"
+            adapter.detect_model(None, (), {"model_name": "gemini-pro"}) == "gemini-pro"
         )
         assert adapter.detect_model(None, (), {}) is None
 
