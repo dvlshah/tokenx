@@ -30,3 +30,15 @@ class TestProviderRegistry:
         )
         assert provider is not None
         assert provider.provider_name == "openai"
+
+        # Mock Gemini function
+        def mock_gemini_fn():
+            pass
+
+        mock_gemini_fn.__module__ = "google.generativeai.models"
+
+        provider = ProviderRegistry.detect_provider(
+            mock_gemini_fn, (), {"model": "gemini-pro"}
+        )
+        assert provider is not None
+        assert provider.provider_name == "gemini"

@@ -47,7 +47,7 @@ Integrating with LLM APIs often involves hidden costs and variable performance. 
 *   **Effortless Integration:** Add monitoring with simple decorators, no need to refactor your API call logic.
 *   **Accurate Cost Tracking:** Uses up-to-date, configurable pricing (including caching discounts) for precise cost analysis.
 *   **Performance Insights:** Easily measure API call latency to identify bottlenecks.
-*   **Multi-Provider Ready:** Designed to consistently monitor costs across different LLM vendors (OpenAI currently supported, more coming soon!).
+*   **Multi-Provider Ready:** Designed to consistently monitor costs across different LLM vendors (OpenAI, Anthropic and Google Gemini).
 
 ---
 
@@ -77,7 +77,7 @@ flowchart LR
 * **Track & save money** – live USD costing with cached‑token discounts
 * **Trace latency** – pinpoint slow models or network hops
 * **Plug‑&‑play decorators** – wrap any sync or async function
-* **Provider plug‑ins** – OpenAI today, Anthropic & Gemini next
+* **Provider plug‑ins** – OpenAI, Anthropic and Google Gemini
 * **Typed** – 100 % `py.typed`, 95 %+ mypy coverage
 * **Zero deps** – slims Docker images
 
@@ -227,7 +227,7 @@ tokenx is designed to work with multiple LLM providers. Here's the current compa
 |----------|--------|-------------|-----------------|--------|-----------------------|
 | OpenAI | ✅ | >= 1.0.0 | Dict, Pydantic | All models (GPT-4, GPT-3.5, etc.) | ✅ (cached_tokens) |
 | Anthropic | ✅ | >= 0.20.0 (approx for cache beta fields) | Dict, Pydantic-like | Claude models (Claude 3 Opus, Sonnet, Haiku) | ✅ (Prompt Caching Beta via cached_tokens & cache_creation_input_tokens) |
-| Google | 🔜 | - | - | Gemini models (coming soon) | - |
+| Google | ✅ | >= 0.8.0 | Dict | Gemini models | - |
 
 ### OpenAI Support Details
 

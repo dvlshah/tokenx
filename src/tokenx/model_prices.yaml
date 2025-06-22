@@ -193,3 +193,24 @@ anthropic:
       cached_in: 3.75
       cached_hit: 0.30
       out: 15.00
+gemini:
+  gemini-1.5-pro:
+    sync:
+      in: 1.25
+      cached_in: 0.3125
+      out: 5.00
+  gemini-2.0-flash:
+    sync:
+      in: 0.10
+      cached_in: 0.025
+      out: 0.40
+  gemini-2.5-flash:
+    sync:
+      in: 0.30
+      cached_in: 0.075
+      out: 2.50
+  gemini-2.5-flash-lite:
+    sync:
+      in: 0.10
+      cached_in: 0.025
+      out: 0.40

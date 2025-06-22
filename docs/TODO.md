@@ -32,16 +32,16 @@
 ## TODO List for Phase 3 (Google Gemini Support)
 
 1. **Gemini Provider Setup**:
-   - [ ] Create Gemini adapter class implementing ProviderAdapter
-   - [ ] Implement token extraction from Gemini responses
-   - [ ] Add detection logic for Gemini client
+   - [x] Create Gemini adapter class implementing ProviderAdapter
+   - [x] Implement token extraction from Gemini responses
+   - [x] Add detection logic for Gemini client
 
 2. **Gemini Pricing**:
-   - [ ] Add Gemini model pricing to YAML configuration
+   - [x] Add Gemini model pricing to YAML configuration
    - [ ] Support Gemini-specific pricing structures and volume-based pricing
 
 3. **Testing for Gemini**:
-   - [ ] Develop unit tests for Gemini adapter
+   - [x] Develop unit tests for Gemini adapter
    - [ ] Create integration tests for Gemini API
 
 ## Future Enhancements
