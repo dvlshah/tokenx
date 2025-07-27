@@ -1,10 +1,10 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.2] - 2025-07-27
 
 ### Added
 - **BaseExtractor Interface**: Formal abstract base class for provider adapters
-  - All providers must implement `usage_from_response` method returning standardized `Usage` dataclass
+  - All providers must implement the `usage_from_response` method returning the standardized `Usage` dataclass
   - Ensures consistent token extraction across providers with compile-time enforcement
   - Maintains backward compatibility through `extract_tokens` delegation
 - **Usage Dataclass**: Immutable, validated data structure for token information
@@ -13,10 +13,10 @@
 - Full mypy --strict compliance across entire codebase
 
 ### Changed
-- Custom provider registration now requires implementing `usage_from_response` abstract method
-- Updated documentation examples to use new BaseExtractor interface
+- Custom provider registration now requires implementing the `usage_from_response` abstract method
+- Updated documentation examples to use the new BaseExtractor interface
 
-## [0.2.6] - 2025-05-10
+## [0.2.1] - 2025-05-10
 
 ### Added
 - **Anthropic Provider Support**:
