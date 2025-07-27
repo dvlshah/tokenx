@@ -46,6 +46,8 @@ To add support for a new LLM provider:
 
 1. Create a new file in `src/tokenx/providers/` for your provider (e.g., `anthropic.py`)
 2. Implement the `ProviderAdapter` interface defined in `base.py`
+   - Must implement the abstract `usage_from_response` method returning a `Usage` dataclass
+   - See existing providers (OpenAI, Anthropic) for implementation examples
 3. Add pricing information for the provider's models to `model_prices.yaml`
 4. Add tests for the new provider in the `tests/` directory
 5. Update the documentation to include the new provider

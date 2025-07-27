@@ -103,7 +103,7 @@ class TokenCountingError(ProviderError):
 
 # Fallback utilities
 def extract_tokens_with_fallbacks(
-    extract_func: Callable, response: Any, provider_name: str
+    extract_func: Callable[..., Any], response: Any, provider_name: str
 ) -> Tuple[int, int, int]:
     """
     Extract tokens from a response with multiple fallback strategies.
@@ -113,7 +113,7 @@ def extract_tokens_with_fallbacks(
     response_type = type(response).__name__
 
     try:
-        return extract_func(response)  # Call the adapter's specific method
+        return extract_func(response)  # type: ignore  # Call the adapter's specific method
     except TokenExtractionError:
         raise  # Re-raise if the adapter already identified a TokenExtractionError
     except Exception as e:  # For other, unexpected errors during adapter's attempt
@@ -265,9 +265,10 @@ def enhance_provider_adapter(adapter: Any) -> Any:
         tier: str = "sync",
     ) -> float:
         try:
-            return original_calculate_cost(
+            result = original_calculate_cost(
                 model, input_tokens, output_tokens, cached_tokens, tier
             )
+            return float(result)
         except ValueError as e:
             available_models = (
                 list(adapter._prices.keys()) if hasattr(adapter, "_prices") else []
@@ -294,7 +295,7 @@ def enhance_provider_adapter(adapter: Any) -> Any:
     if hasattr(adapter, "get_encoding_for_model"):
         original_get_encoding = adapter.get_encoding_for_model
 
-        def enhanced_get_encoding(model: str):
+        def enhanced_get_encoding(model: str) -> Any:
             try:
                 return original_get_encoding(model)
             except Exception as e:

@@ -28,7 +28,7 @@ ReturnT = Union[ResponseT, Tuple[ResponseT, Dict[str, Any]]]
 # ──────────────────────────────────────────────────────────────────────────────
 # Helper: merge / create metrics dict
 # ──────────────────────────────────────────────────────────────────────────────
-def _merge_metrics(ret: ReturnT, **new_data) -> Tuple[ResponseT, Dict[str, Any]]:
+def _merge_metrics(ret: ReturnT, **new_data: Any) -> Tuple[ResponseT, Dict[str, Any]]:
     """
     Accepts:
         • plain response           → returns (response, {new_data})
@@ -45,19 +45,19 @@ def _merge_metrics(ret: ReturnT, **new_data) -> Tuple[ResponseT, Dict[str, Any]]
 # ──────────────────────────────────────────────────────────────────────────────
 # Decorator 1  – latency measurement
 # ──────────────────────────────────────────────────────────────────────────────
-def measure_latency(fn: Callable) -> Callable:
+def measure_latency(fn: Callable[..., Any]) -> Callable[..., Any]:
     """
     Adds `latency_ms` (float, wall-clock) to .metrics.
     Works with sync **or** async functions transparently.
     """
     is_async = inspect.iscoroutinefunction(fn)
 
-    async def _aw(*a, **kw):
+    async def _aw(*a: Any, **kw: Any) -> Any:
         start = time.perf_counter_ns()
         ret = await fn(*a, **kw)
         return _merge_metrics(ret, latency_ms=(time.perf_counter_ns() - start) / 1e6)
 
-    def _sync(*a, **kw):
+    def _sync(*a: Any, **kw: Any) -> Any:
         start = time.perf_counter_ns()
         ret = fn(*a, **kw)
         return _merge_metrics(ret, latency_ms=(time.perf_counter_ns() - start) / 1e6)
@@ -74,7 +74,7 @@ def measure_cost(
     *,
     tier: str = "sync",
     enable_caching: bool = True,
-) -> Callable:
+) -> Callable[..., Any]:
     """
     Adds `cost_usd` and token counts to .metrics by analyzing response usage.
     Includes provider-specific cache metrics if available.
@@ -91,10 +91,10 @@ def measure_cost(
         Whether to discount cached tokens if provider supports it.
     """
 
-    def decorator(fn: Callable) -> Callable:
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         is_async = inspect.iscoroutinefunction(fn)
 
-        def get_calculator():
+        def get_calculator() -> CostCalculator:
             # Use the specified provider and model
             return CostCalculator.for_provider(
                 provider,
@@ -103,7 +103,7 @@ def measure_cost(
                 enable_caching=enable_caching,
             )
 
-        def get_cost_metrics(resp, calculator):
+        def get_cost_metrics(resp: Any, calculator: CostCalculator) -> Dict[str, Any]:
             # Cost is calculated by the provider adapter.
             cost_metrics = calculator.costed()(lambda: resp)()
             cost_metrics["cost_usd"] = cost_metrics["usd"]
@@ -134,7 +134,7 @@ def measure_cost(
 
                     if usage_data is not None:
                         anthropic_fields = (
-                            calculator.provider._extract_anthropic_usage_fields(
+                            calculator.provider._extract_anthropic_usage_fields(  # type: ignore
                                 usage_data
                             )
                         )
@@ -152,15 +152,15 @@ def measure_cost(
                         f"Warning: Could not extract extra Anthropic cache metrics: {e}"
                     )
 
-            return cost_metrics
+            return dict(cost_metrics)
 
-        async def _aw(*args, **kwargs):
+        async def _aw(*args: Any, **kwargs: Any) -> Any:
             calculator = get_calculator()
             resp = await fn(*args, **kwargs)
             # Pass the original response object to get_cost_metrics
             return _merge_metrics(resp, **get_cost_metrics(resp, calculator))
 
-        def _sync(*args, **kwargs):
+        def _sync(*args: Any, **kwargs: Any) -> Any:
             calculator = get_calculator()
             resp = fn(*args, **kwargs)
             # Pass the original response object to get_cost_metrics

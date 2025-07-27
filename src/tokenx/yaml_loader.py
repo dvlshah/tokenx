@@ -39,7 +39,7 @@ def load_yaml_prices() -> Dict[str, Any]:
         for key in raw
     ):
         # New format: provider -> model -> tier -> price type -> value
-        result = {}
+        result: Dict[str, Any] = {}
         for provider, models in raw.items():
             result[provider] = {}
             for model, tiers in models.items():

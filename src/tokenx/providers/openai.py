@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, Tuple
 
 import tiktoken
 
-from .base import ProviderAdapter
+from .base import ProviderAdapter, Usage
 from ..yaml_loader import load_yaml_prices
 from ..errors import enhance_provider_adapter, TokenExtractionError, PricingError
 
@@ -16,7 +16,7 @@ from ..errors import enhance_provider_adapter, TokenExtractionError, PricingErro
 class OpenAIAdapter(ProviderAdapter):
     """Adapter for OpenAI API cost calculation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the OpenAI adapter."""
         self._prices = load_yaml_prices().get("openai", {})
 
@@ -25,7 +25,7 @@ class OpenAIAdapter(ProviderAdapter):
         """Return the provider name identifier."""
         return "openai"
 
-    def matches_function(self, func: Any, args: tuple, kwargs: dict) -> bool:
+    def matches_function(self, func: Any, args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> bool:
         """
         Determine if this function is from the OpenAI provider.
 
@@ -129,6 +129,54 @@ class OpenAIAdapter(ProviderAdapter):
 
         return result
 
+    def usage_from_response(self, response: Any) -> Usage:
+        """
+        Extract standardized usage information from an OpenAI response.
+        
+        Args:
+            response: OpenAI response object (ChatCompletion, etc.)
+            
+        Returns:
+            Usage: Standardized usage data
+            
+        Raises:
+            TokenExtractionError: If usage data cannot be extracted
+        """
+        # Handle different response shapes to extract usage information
+        usage = None
+
+        # Try to extract usage from response object
+        if hasattr(response, "usage"):
+            usage = response.usage
+        elif isinstance(response, dict) and "usage" in response:
+            usage = response["usage"]
+        else:
+            # Use the response itself as usage data
+            usage = response
+
+        # If we couldn't extract anything meaningful, raise an error
+        if usage is None:
+            raise TokenExtractionError(
+                "Could not extract usage data from response. "
+                "Expected 'usage' attribute or key.",
+                self.provider_name,
+                type(response).__name__,
+            )
+
+        # Use normalize_usage to extract token counts
+        normalized = self._normalize_usage(usage)
+        
+        # Create Usage dataclass with extracted values
+        return Usage(
+            input_tokens=normalized["input_tokens"],
+            output_tokens=normalized["output_tokens"],
+            cached_tokens=normalized["cached_tokens"],
+            extra_fields={
+                "provider": "openai",
+                "raw_usage": usage if isinstance(usage, dict) else None
+            }
+        )
+
     def extract_tokens(self, response: Any) -> Tuple[int, int, int]:
         """
         Extract token counts from an OpenAI response object.
@@ -171,7 +219,7 @@ class OpenAIAdapter(ProviderAdapter):
             normalized["cached_tokens"],
         )
 
-    def detect_model(self, func: Any, args: tuple, kwargs: dict) -> Optional[str]:
+    def detect_model(self, func: Any, args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Optional[str]:
         """
         Try to identify model name from function and arguments.
 
@@ -249,9 +297,9 @@ class OpenAIAdapter(ProviderAdapter):
         if price.get("out") is not None:
             cost += output_tokens * price["out"]
 
-        return cost
+        return float(cost)
 
-    def get_encoding_for_model(self, model: str):
+    def get_encoding_for_model(self, model: str) -> tiktoken.Encoding:
         """
         Get the appropriate tiktoken encoding for a given model.
 
@@ -286,7 +334,7 @@ class OpenAIAdapter(ProviderAdapter):
 
 
 # Apply enhanced error handling to the adapter
-def create_openai_adapter():
+def create_openai_adapter() -> Any:
     """
     Create an OpenAI adapter with enhanced error handling.
 
@@ -294,4 +342,5 @@ def create_openai_adapter():
         OpenAIAdapter: An enhanced OpenAI adapter
     """
     adapter = OpenAIAdapter()
-    return enhance_provider_adapter(adapter)
+    enhanced = enhance_provider_adapter(adapter)
+    return enhanced

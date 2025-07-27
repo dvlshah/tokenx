@@ -4,7 +4,7 @@ Anthropic Provider Adapter Implementation
 
 from typing import Any, Dict, Optional, Tuple
 
-from .base import ProviderAdapter
+from .base import ProviderAdapter, Usage
 from ..yaml_loader import load_yaml_prices
 from ..errors import enhance_provider_adapter, TokenExtractionError, PricingError
 
@@ -12,7 +12,7 @@ from ..errors import enhance_provider_adapter, TokenExtractionError, PricingErro
 class AnthropicAdapter(ProviderAdapter):
     """Adapter for Anthropic API cost calculation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Anthropic adapter."""
         self._prices = load_yaml_prices().get("anthropic", {})
 
@@ -21,7 +21,7 @@ class AnthropicAdapter(ProviderAdapter):
         """Return the provider name identifier."""
         return "anthropic"
 
-    def matches_function(self, func: Any, args: tuple, kwargs: dict) -> bool:
+    def matches_function(self, func: Any, args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> bool:
         """
         Determine if this function is from the Anthropic provider.
         Checks for Anthropic client in the function's module or arguments,
@@ -97,7 +97,7 @@ class AnthropicAdapter(ProviderAdapter):
         for key in ["input_tokens", "output_tokens"]:
             if result.get(key) is not None:
                 try:
-                    result[key] = int(result[key])
+                    result[key] = int(result[key])  # type: ignore
                 except (ValueError, TypeError):
                     # If conversion fails for input/output, set to None as they are critical
                     result[key] = None
@@ -113,6 +113,77 @@ class AnthropicAdapter(ProviderAdapter):
             else:
                 result[key] = 0  # Default to 0 if None
         return result
+
+    def usage_from_response(self, response: Any) -> Usage:
+        """
+        Extract standardized usage information from an Anthropic response.
+        
+        Args:
+            response: Anthropic response object (Message, etc.)
+            
+        Returns:
+            Usage: Standardized usage data with Anthropic-specific fields
+            
+        Raises:
+            TokenExtractionError: If usage data cannot be extracted
+        """
+        usage_data = None
+
+        # Try to extract usage from response object
+        if hasattr(response, "usage") and response.usage is not None:
+            usage_data = response.usage
+        elif (
+            isinstance(response, dict)
+            and "usage" in response
+            and response["usage"] is not None
+        ):
+            usage_data = response["usage"]
+        # Some Anthropic SDK versions/methods might return token counts at the top level of the response
+        elif hasattr(response, "input_tokens") and hasattr(response, "output_tokens"):
+            usage_data = response  # The response object itself contains the token counts
+        elif (
+            isinstance(response, dict)
+            and "input_tokens" in response
+            and "output_tokens" in response
+        ):
+            usage_data = response
+
+        if usage_data is None:
+            raise TokenExtractionError(
+                "Could not extract usage data from Anthropic response. "
+                "Expected 'usage' attribute/key or top-level 'input_tokens'/'output_tokens'.",
+                self.provider_name,
+                type(response).__name__,
+            )
+
+        extracted_fields = self._extract_anthropic_usage_fields(usage_data)
+
+        input_tokens = extracted_fields["input_tokens"]
+        output_tokens = extracted_fields["output_tokens"]
+        cached_tokens = extracted_fields["cache_read_input_tokens"] or 0  # Map cache_read to cached_tokens
+
+        # Ensure required tokens were found
+        if input_tokens is None or output_tokens is None:
+            raise TokenExtractionError(
+                "Could not extract 'input_tokens' or 'output_tokens' from Anthropic usage data.",
+                self.provider_name,
+                type(usage_data).__name__,
+            )
+        
+        # Create Usage dataclass with Anthropic-specific cache fields
+        extra_fields = {
+            "provider": "anthropic",
+            "cache_creation_input_tokens": extracted_fields.get("cache_creation_input_tokens", 0),
+            "cache_read_input_tokens": extracted_fields.get("cache_read_input_tokens", 0),
+            "raw_usage": usage_data if isinstance(usage_data, dict) else None
+        }
+        
+        return Usage(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cached_tokens=cached_tokens,
+            extra_fields=extra_fields
+        )
 
     def extract_tokens(self, response: Any) -> Tuple[int, int, int]:
         """
@@ -156,7 +227,7 @@ class AnthropicAdapter(ProviderAdapter):
         output_tokens = extracted_fields["output_tokens"]
         cached_tokens = extracted_fields[
             "cache_read_input_tokens"
-        ]  # Map cache_read to cached_tokens
+        ] or 0  # Map cache_read to cached_tokens
 
         # Ensure required tokens were found
         if input_tokens is None or output_tokens is None:
@@ -167,7 +238,7 @@ class AnthropicAdapter(ProviderAdapter):
             )
         return input_tokens, output_tokens, cached_tokens
 
-    def detect_model(self, func: Any, args: tuple, kwargs: dict) -> Optional[str]:
+    def detect_model(self, func: Any, args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Optional[str]:
         """
         Try to identify model name from function and arguments.
         The @measure_cost decorator requires explicit model, so this is supplementary.
@@ -237,7 +308,7 @@ class AnthropicAdapter(ProviderAdapter):
         return cost
 
 
-def create_anthropic_adapter():
+def create_anthropic_adapter() -> Any:
     """
     Create an Anthropic adapter with enhanced error handling.
 
@@ -245,4 +316,5 @@ def create_anthropic_adapter():
         AnthropicAdapter: An enhanced Anthropic adapter
     """
     adapter = AnthropicAdapter()
-    return enhance_provider_adapter(adapter)  # ensure fallbacks are applied
+    enhanced = enhance_provider_adapter(adapter)  # ensure fallbacks are applied
+    return enhanced
