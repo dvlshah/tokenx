@@ -61,9 +61,11 @@ class CostCalculator:
         if provider is None:
             raise ValueError(f"Provider {provider_name!r} not found")
 
-        # For OpenAI, return the OpenAICostCalculator for backward compatibility
-        if provider_name == "openai":
-            return OpenAICostCalculator(model, tier=tier, enable_caching=enable_caching)
+        # Registry-based factory dispatch - no hardcoded conditionals
+        calculator_class = ProviderRegistry.get_calculator_class(provider_name)
+
+        if calculator_class:
+            return calculator_class(model, tier=tier, enable_caching=enable_caching)  # type: ignore
 
         return CostCalculator(
             provider_name=provider_name,
@@ -113,6 +115,8 @@ class CostCalculator:
         Returns:
             float: Cost in USD
         """
+        if self.provider is None:
+            raise ValueError("Provider not initialized")
         return self.provider.calculate_cost(
             self.model,
             input_tokens,
@@ -131,6 +135,8 @@ class CostCalculator:
         Returns:
             float: Cost in USD
         """
+        if self.provider is None:
+            raise ValueError("Provider not initialized")
         input_tokens, output_tokens, cached_tokens = self.provider.extract_tokens(usage)
         return self.calculate_cost(input_tokens, output_tokens, cached_tokens)
 
@@ -165,7 +171,7 @@ class CostCalculator:
         # Proceed to calculate cost using the extracted usage data
         return self.cost_from_usage(usage_data)
 
-    def costed(self, expects_usage: bool = False) -> Callable:
+    def costed(self, expects_usage: bool = False) -> Callable[..., Any]:
         """
         Decorator to add cost tracking to a function.
 
@@ -178,9 +184,9 @@ class CostCalculator:
             Callable: Decorator function
         """
 
-        def decorator(fn: Callable) -> Callable:
+        def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
             @functools.wraps(fn)
-            def wrapper(*args, **kwargs):
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
                 result = fn(*args, **kwargs)
 
                 if expects_usage:
@@ -190,12 +196,16 @@ class CostCalculator:
                         raise ValueError("Function did not return usage data")
 
                     cost = self.cost_from_usage(usage_data)
+                    if self.provider is None:
+                        raise ValueError("Provider not initialized")
                     input_tokens, output_tokens, cached_tokens = (
                         self.provider.extract_tokens(usage_data)
                     )
                 else:
                     # Try to extract usage from result
                     cost = self.cost_from_response(result)
+                    if self.provider is None:
+                        raise ValueError("Provider not initialized")
                     input_tokens, output_tokens, cached_tokens = (
                         self.provider.extract_tokens(
                             result.usage if hasattr(result, "usage") else result
@@ -244,11 +254,17 @@ class OpenAICostCalculator(CostCalculator):
         )
 
         # Set up the tokenizer for backward compatibility
-        self.enc = self.provider.get_encoding_for_model(model)
+        if hasattr(self.provider, "get_encoding_for_model"):
+            self.enc = self.provider.get_encoding_for_model(model)  # type: ignore
+        else:
+            raise AttributeError("Provider does not support encoding")
 
     def _count(self, text: str) -> int:
         """Return BPE token count for text (backward compatibility)."""
-        return self.provider.count_tokens(text, self.model)
+        if hasattr(self.provider, "count_tokens"):
+            return self.provider.count_tokens(text, self.model)  # type: ignore
+        else:
+            raise AttributeError("Provider does not support token counting")
 
     def blended_cost(
         self,
@@ -272,3 +288,7 @@ class OpenAICostCalculator(CostCalculator):
             self._count(completion),
             cached_prompt_tokens,
         )
+
+
+# Register the OpenAI calculator class for backward compatibility
+ProviderRegistry.register_calculator_class("openai", OpenAICostCalculator)

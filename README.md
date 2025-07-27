@@ -318,6 +318,52 @@ For Anthropic (when prompt caching beta is active and cache is utilized):
 
 If Anthropic's prompt caching beta is not used or no cache interaction occurs, cached_tokens will be 0 and cache_creation_input_tokens might be 0 or absent.
 
+## 🔌 Adding a Custom Provider
+
+TokenX makes it easy to add support for new LLM providers using the `@register_provider` decorator:
+
+```python
+from tokenx.providers import register_provider
+from tokenx.providers.base import ProviderAdapter, Usage
+from typing import Any, Optional
+
+@register_provider("custom")
+class CustomAdapter(ProviderAdapter):
+    @property
+    def provider_name(self) -> str:
+        return "custom"
+    
+    def usage_from_response(self, response: Any) -> Usage:
+        # Extract standardized usage information from provider response
+        return Usage(
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+            cached_tokens=getattr(response.usage, 'cached_tokens', 0),
+            extra_fields={'provider': 'custom'}
+        )
+    
+    def matches_function(self, func: Any, args: tuple, kwargs: dict) -> bool:
+        # Detect if this function uses your provider
+        return "custom" in kwargs.get("model", "").lower()
+    
+    def detect_model(self, func: Any, args: tuple, kwargs: dict) -> Optional[str]:
+        return kwargs.get("model")
+    
+    def calculate_cost(self, model: str, input_tokens: int, 
+                      output_tokens: int, cached_tokens: int = 0, 
+                      tier: str = "sync") -> float:
+        # Implement your pricing logic
+        return input_tokens * 0.001 + output_tokens * 0.002
+
+# Now you can use it immediately
+from tokenx.metrics import measure_cost
+
+@measure_cost(provider="custom", model="custom-model")
+def call_custom_llm():
+    # Your API call here
+    pass
+```
+
 ## 🤝 Contributing
 
 ```bash
