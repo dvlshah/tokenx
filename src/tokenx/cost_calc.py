@@ -63,10 +63,10 @@ class CostCalculator:
 
         # Registry-based factory dispatch - no hardcoded conditionals
         calculator_class = ProviderRegistry.get_calculator_class(provider_name)
-        
+
         if calculator_class:
             return calculator_class(model, tier=tier, enable_caching=enable_caching)  # type: ignore
-        
+
         return CostCalculator(
             provider_name=provider_name,
             model=model,
@@ -254,14 +254,14 @@ class OpenAICostCalculator(CostCalculator):
         )
 
         # Set up the tokenizer for backward compatibility
-        if hasattr(self.provider, 'get_encoding_for_model'):
+        if hasattr(self.provider, "get_encoding_for_model"):
             self.enc = self.provider.get_encoding_for_model(model)  # type: ignore
         else:
             raise AttributeError("Provider does not support encoding")
 
     def _count(self, text: str) -> int:
         """Return BPE token count for text (backward compatibility)."""
-        if hasattr(self.provider, 'count_tokens'):
+        if hasattr(self.provider, "count_tokens"):
             return self.provider.count_tokens(text, self.model)  # type: ignore
         else:
             raise AttributeError("Provider does not support token counting")

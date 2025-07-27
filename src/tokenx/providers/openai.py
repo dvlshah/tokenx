@@ -25,7 +25,9 @@ class OpenAIAdapter(ProviderAdapter):
         """Return the provider name identifier."""
         return "openai"
 
-    def matches_function(self, func: Any, args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> bool:
+    def matches_function(
+        self, func: Any, args: Tuple[Any, ...], kwargs: Dict[str, Any]
+    ) -> bool:
         """
         Determine if this function is from the OpenAI provider.
 
@@ -132,13 +134,13 @@ class OpenAIAdapter(ProviderAdapter):
     def usage_from_response(self, response: Any) -> Usage:
         """
         Extract standardized usage information from an OpenAI response.
-        
+
         Args:
             response: OpenAI response object (ChatCompletion, etc.)
-            
+
         Returns:
             Usage: Standardized usage data
-            
+
         Raises:
             TokenExtractionError: If usage data cannot be extracted
         """
@@ -165,7 +167,7 @@ class OpenAIAdapter(ProviderAdapter):
 
         # Use normalize_usage to extract token counts
         normalized = self._normalize_usage(usage)
-        
+
         # Create Usage dataclass with extracted values
         return Usage(
             input_tokens=normalized["input_tokens"],
@@ -173,8 +175,8 @@ class OpenAIAdapter(ProviderAdapter):
             cached_tokens=normalized["cached_tokens"],
             extra_fields={
                 "provider": "openai",
-                "raw_usage": usage if isinstance(usage, dict) else None
-            }
+                "raw_usage": usage if isinstance(usage, dict) else None,
+            },
         )
 
     def extract_tokens(self, response: Any) -> Tuple[int, int, int]:
@@ -219,7 +221,9 @@ class OpenAIAdapter(ProviderAdapter):
             normalized["cached_tokens"],
         )
 
-    def detect_model(self, func: Any, args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Optional[str]:
+    def detect_model(
+        self, func: Any, args: Tuple[Any, ...], kwargs: Dict[str, Any]
+    ) -> Optional[str]:
         """
         Try to identify model name from function and arguments.
 

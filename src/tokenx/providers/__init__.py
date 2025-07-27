@@ -17,6 +17,7 @@ from ..errors import enhance_provider_adapter
 
 class ProviderAlreadyRegisteredError(Exception):
     """Exception raised when trying to register a provider that already exists."""
+
     pass
 
 
@@ -30,19 +31,21 @@ _CALCULATOR_REGISTRY: Dict[str, type] = {}
 _REGISTRY_LOCK = threading.Lock()
 
 
-def register_provider(name: str) -> Callable[[Type[ProviderAdapter]], Type[ProviderAdapter]]:
+def register_provider(
+    name: str,
+) -> Callable[[Type[ProviderAdapter]], Type[ProviderAdapter]]:
     """
     Decorator to register a provider adapter with the global registry.
-    
+
     Args:
         name: Provider name identifier
-        
+
     Returns:
         Decorator function that registers the provider class
-        
+
     Raises:
         ProviderAlreadyRegisteredError: If provider name is already registered
-        
+
     Example:
         @register_provider("custom")
         class CustomAdapter(ProviderAdapter):
@@ -51,20 +54,23 @@ def register_provider(name: str) -> Callable[[Type[ProviderAdapter]], Type[Provi
                 return "custom"
             # ... implement other methods
     """
+
     def decorator(cls: Type[ProviderAdapter]) -> Type[ProviderAdapter]:
         with _REGISTRY_LOCK:
             if name in _PROVIDER_REGISTRY:
                 raise ProviderAlreadyRegisteredError(
                     f"Provider '{name}' is already registered with class {_PROVIDER_REGISTRY[name].__name__}"
                 )
-            
+
             # Validate that the class implements ProviderAdapter
             if not issubclass(cls, ProviderAdapter):
-                raise TypeError(f"Provider class {cls.__name__} must inherit from ProviderAdapter")
-                
+                raise TypeError(
+                    f"Provider class {cls.__name__} must inherit from ProviderAdapter"
+                )
+
             _PROVIDER_REGISTRY[name] = cls
         return cls
-    
+
     return decorator
 
 
@@ -98,11 +104,11 @@ class ProviderRegistry:
             ProviderAdapter or None if not found
         """
         cls._ensure_initialized()
-        
+
         # Check if we have an instance already
         if name in cls._providers:
             return cls._providers[name]
-            
+
         # Check the global registry for class definitions
         if name in _PROVIDER_REGISTRY:
             provider_class = _PROVIDER_REGISTRY[name]
@@ -110,27 +116,29 @@ class ProviderRegistry:
             provider_instance = provider_class()
             cls.register(provider_instance)
             return cls._providers[name]
-            
+
         return None
 
     @classmethod
     def get_calculator_class(cls, provider_name: str) -> Optional[type]:
         """
         Get the calculator class for a provider (for backward compatibility).
-        
+
         Args:
             provider_name: Provider name
-            
+
         Returns:
             Calculator class if registered, None otherwise
         """
         return _CALCULATOR_REGISTRY.get(provider_name)
 
     @classmethod
-    def register_calculator_class(cls, provider_name: str, calculator_class: type) -> None:
+    def register_calculator_class(
+        cls, provider_name: str, calculator_class: type
+    ) -> None:
         """
         Register a calculator class for a provider.
-        
+
         Args:
             provider_name: Provider name
             calculator_class: Calculator class to register
@@ -188,7 +196,7 @@ class ProviderRegistry:
         Includes robust error handling for import failures.
         """
         import warnings
-        
+
         # Get the path to the providers package
         providers_path = Path(__file__).parent
 
@@ -212,19 +220,21 @@ class ProviderRegistry:
                                 provider_name = name  # Use module name as provider name
                                 if provider_name not in _PROVIDER_REGISTRY:
                                     _PROVIDER_REGISTRY[provider_name] = obj
-                                
+
                                 # Check if there's a creator function available
                                 creator_func_name = f"create_{name}_adapter"
                                 if hasattr(module, creator_func_name):
                                     try:
                                         # Use the creator function to get an enhanced adapter
-                                        creator_func = getattr(module, creator_func_name)
+                                        creator_func = getattr(
+                                            module, creator_func_name
+                                        )
                                         adapter = creator_func()
                                         cls.register(adapter)
                                     except Exception as e:
                                         warnings.warn(
                                             f"Failed to create adapter for provider '{name}' using creator function: {e}",
-                                            RuntimeWarning
+                                            RuntimeWarning,
                                         )
                                         # Fall back to normal instantiation
                                         try:
@@ -232,7 +242,7 @@ class ProviderRegistry:
                                         except Exception as fallback_e:
                                             warnings.warn(
                                                 f"Failed to instantiate provider '{name}': {fallback_e}",
-                                                RuntimeWarning
+                                                RuntimeWarning,
                                             )
                                 else:
                                     try:
@@ -241,28 +251,28 @@ class ProviderRegistry:
                                     except Exception as e:
                                         warnings.warn(
                                             f"Failed to instantiate provider '{name}': {e}",
-                                            RuntimeWarning
+                                            RuntimeWarning,
                                         )
                         except Exception as e:
                             # Continue processing other objects if one fails
                             warnings.warn(
                                 f"Error processing object in provider module '{name}': {e}",
-                                RuntimeWarning
+                                RuntimeWarning,
                             )
                             continue
-                            
+
                 except ImportError as e:
                     # Warn about failed imports but continue discovery
                     warnings.warn(
                         f"Failed to import provider module '{name}': {e}",
-                        RuntimeWarning
+                        RuntimeWarning,
                     )
                     continue
                 except Exception as e:
                     # Catch any other unexpected errors during module processing
                     warnings.warn(
                         f"Unexpected error processing provider module '{name}': {e}",
-                        RuntimeWarning
+                        RuntimeWarning,
                     )
                     continue
 

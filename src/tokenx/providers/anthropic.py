@@ -21,7 +21,9 @@ class AnthropicAdapter(ProviderAdapter):
         """Return the provider name identifier."""
         return "anthropic"
 
-    def matches_function(self, func: Any, args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> bool:
+    def matches_function(
+        self, func: Any, args: Tuple[Any, ...], kwargs: Dict[str, Any]
+    ) -> bool:
         """
         Determine if this function is from the Anthropic provider.
         Checks for Anthropic client in the function's module or arguments,
@@ -117,13 +119,13 @@ class AnthropicAdapter(ProviderAdapter):
     def usage_from_response(self, response: Any) -> Usage:
         """
         Extract standardized usage information from an Anthropic response.
-        
+
         Args:
             response: Anthropic response object (Message, etc.)
-            
+
         Returns:
             Usage: Standardized usage data with Anthropic-specific fields
-            
+
         Raises:
             TokenExtractionError: If usage data cannot be extracted
         """
@@ -140,7 +142,9 @@ class AnthropicAdapter(ProviderAdapter):
             usage_data = response["usage"]
         # Some Anthropic SDK versions/methods might return token counts at the top level of the response
         elif hasattr(response, "input_tokens") and hasattr(response, "output_tokens"):
-            usage_data = response  # The response object itself contains the token counts
+            usage_data = (
+                response  # The response object itself contains the token counts
+            )
         elif (
             isinstance(response, dict)
             and "input_tokens" in response
@@ -160,7 +164,9 @@ class AnthropicAdapter(ProviderAdapter):
 
         input_tokens = extracted_fields["input_tokens"]
         output_tokens = extracted_fields["output_tokens"]
-        cached_tokens = extracted_fields["cache_read_input_tokens"] or 0  # Map cache_read to cached_tokens
+        cached_tokens = (
+            extracted_fields["cache_read_input_tokens"] or 0
+        )  # Map cache_read to cached_tokens
 
         # Ensure required tokens were found
         if input_tokens is None or output_tokens is None:
@@ -169,20 +175,24 @@ class AnthropicAdapter(ProviderAdapter):
                 self.provider_name,
                 type(usage_data).__name__,
             )
-        
+
         # Create Usage dataclass with Anthropic-specific cache fields
         extra_fields = {
             "provider": "anthropic",
-            "cache_creation_input_tokens": extracted_fields.get("cache_creation_input_tokens", 0),
-            "cache_read_input_tokens": extracted_fields.get("cache_read_input_tokens", 0),
-            "raw_usage": usage_data if isinstance(usage_data, dict) else None
+            "cache_creation_input_tokens": extracted_fields.get(
+                "cache_creation_input_tokens", 0
+            ),
+            "cache_read_input_tokens": extracted_fields.get(
+                "cache_read_input_tokens", 0
+            ),
+            "raw_usage": usage_data if isinstance(usage_data, dict) else None,
         }
-        
+
         return Usage(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             cached_tokens=cached_tokens,
-            extra_fields=extra_fields
+            extra_fields=extra_fields,
         )
 
     def extract_tokens(self, response: Any) -> Tuple[int, int, int]:
@@ -225,9 +235,9 @@ class AnthropicAdapter(ProviderAdapter):
 
         input_tokens = extracted_fields["input_tokens"]
         output_tokens = extracted_fields["output_tokens"]
-        cached_tokens = extracted_fields[
-            "cache_read_input_tokens"
-        ] or 0  # Map cache_read to cached_tokens
+        cached_tokens = (
+            extracted_fields["cache_read_input_tokens"] or 0
+        )  # Map cache_read to cached_tokens
 
         # Ensure required tokens were found
         if input_tokens is None or output_tokens is None:
@@ -238,7 +248,9 @@ class AnthropicAdapter(ProviderAdapter):
             )
         return input_tokens, output_tokens, cached_tokens
 
-    def detect_model(self, func: Any, args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Optional[str]:
+    def detect_model(
+        self, func: Any, args: Tuple[Any, ...], kwargs: Dict[str, Any]
+    ) -> Optional[str]:
         """
         Try to identify model name from function and arguments.
         The @measure_cost decorator requires explicit model, so this is supplementary.
