@@ -23,14 +23,15 @@ from typing import Any, Dict, Callable, Union
 from .providers import ProviderRegistry
 from .yaml_loader import load_yaml_prices
 from .errors import TokenExtractionError
+from .constants import DEFAULT_TIER, DEFAULT_ENABLE_CACHING, PROVIDER_OPENAI
 
 
 # For backward compatibility with existing code
 PRICE_TABLE = load_yaml_prices()
 PRICE_PER_TOKEN = {
-    model: tiers["sync"]
-    for model, tiers in PRICE_TABLE.get("openai", {}).items()
-    if "sync" in tiers
+    model: tiers[DEFAULT_TIER]
+    for model, tiers in PRICE_TABLE.get(PROVIDER_OPENAI, {}).items()
+    if DEFAULT_TIER in tiers
 }
 
 
@@ -42,8 +43,8 @@ class CostCalculator:
         provider_name: str,
         model: str,
         *,
-        tier: str = "sync",
-        enable_caching: bool = True,
+        tier: str = DEFAULT_TIER,
+        enable_caching: bool = DEFAULT_ENABLE_CACHING,
     ) -> Union[CostCalculator, "OpenAICostCalculator"]:
         """
         Factory method to create a cost calculator for a specific provider.
@@ -79,8 +80,8 @@ class CostCalculator:
         provider_name: str,
         model: str,
         *,
-        tier: str = "sync",
-        enable_caching: bool = True,
+        tier: str = DEFAULT_TIER,
+        enable_caching: bool = DEFAULT_ENABLE_CACHING,
     ):
         """
         Initialize a cost calculator for any LLM provider.
@@ -150,26 +151,51 @@ class CostCalculator:
         Returns:
             float: Cost in USD
         """
-        usage_data = None
+        if self.provider is None:
+            raise ValueError("Provider not initialized")
 
-        # Try to extract usage from response object attributes or dict keys
-        if hasattr(response, "usage"):
-            usage_data = response.usage
-        elif isinstance(response, dict) and "usage" in response:
-            usage_data = response["usage"]
-
-        # If no valid usage data structure was found, raise an error
-        if usage_data is None:
-            # Raise TokenExtractionError directly here as the structure is wrong
-            # Use the provider associated with this calculator instance
-            raise TokenExtractionError(
-                "Response object does not contain expected 'usage' attribute or key.",
-                self.provider_name,
-                type(response).__name__,
+        # Use the provider adapter to extract tokens (handles special cases)
+        try:
+            input_tokens, output_tokens, cached_tokens = self.provider.extract_tokens(
+                response
             )
+            # Check if provider supports enhanced cost calculation with response object
+            if (
+                hasattr(self.provider, "calculate_cost")
+                and "response" in self.provider.calculate_cost.__code__.co_varnames
+            ):
+                return self.provider.calculate_cost(
+                    self.model,
+                    input_tokens,
+                    output_tokens,
+                    cached_tokens,
+                    self.tier,
+                    response,
+                )
+            else:
+                return self.calculate_cost(input_tokens, output_tokens, cached_tokens)
+        except Exception:
+            # Fallback to old method for backward compatibility
+            usage_data = None
 
-        # Proceed to calculate cost using the extracted usage data
-        return self.cost_from_usage(usage_data)
+            # Try to extract usage from response object attributes or dict keys
+            if hasattr(response, "usage"):
+                usage_data = response.usage
+            elif isinstance(response, dict) and "usage" in response:
+                usage_data = response["usage"]
+
+            # If no valid usage data structure was found, raise an error
+            if usage_data is None:
+                # Raise TokenExtractionError directly here as the structure is wrong
+                # Use the provider associated with this calculator instance
+                raise TokenExtractionError(
+                    "Response object does not contain expected 'usage' attribute or key.",
+                    self.provider_name,
+                    type(response).__name__,
+                )
+
+            # Proceed to calculate cost using the extracted usage data
+            return self.cost_from_usage(usage_data)
 
     def costed(self, expects_usage: bool = False) -> Callable[..., Any]:
         """
@@ -235,8 +261,8 @@ class OpenAICostCalculator(CostCalculator):
         self,
         model: str,
         *,
-        tier: str = "sync",
-        enable_caching: bool = True,
+        tier: str = DEFAULT_TIER,
+        enable_caching: bool = DEFAULT_ENABLE_CACHING,
     ):
         """
         Initialize an OpenAI cost calculator.
@@ -247,7 +273,7 @@ class OpenAICostCalculator(CostCalculator):
             enable_caching: Whether to discount cached tokens (default: True)
         """
         super().__init__(
-            provider_name="openai",
+            provider_name=PROVIDER_OPENAI,
             model=model,
             tier=tier,
             enable_caching=enable_caching,
@@ -291,4 +317,4 @@ class OpenAICostCalculator(CostCalculator):
 
 
 # Register the OpenAI calculator class for backward compatibility
-ProviderRegistry.register_calculator_class("openai", OpenAICostCalculator)
+ProviderRegistry.register_calculator_class(PROVIDER_OPENAI, OpenAICostCalculator)

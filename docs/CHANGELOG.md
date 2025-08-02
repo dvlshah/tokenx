@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.2.6] - 2025-07-30
+
+### Added
+- **Comprehensive OpenAI API Coverage**: 9x expansion from 3 to 27+ models/APIs
+  - Chat Completions, Embeddings, Audio (transcription/TTS), Moderation, Image Generation
+  - New models: o3-pro, o3-deep-research, o4-mini-deep-research, codex-mini-latest
+  - Audio models: gpt-4o-transcribe, gpt-4o-mini-transcribe, gpt-4o-mini-tts
+  - Audio preview: gpt-4o-audio-preview, gpt-4o-mini-audio-preview
+  - Realtime: gpt-4o-realtime-preview, gpt-4o-mini-realtime-preview
+- **Dual Token Pricing**: Separate pricing for audio vs text tokens in new audio models
+- **Hybrid Pricing**: gpt-image-1 combines token costs + per-image costs
+- **Enhanced Function Detection**: Parameter-based API detection for comprehensive coverage
+- **Comprehensive Test Suite**: 14 real API tests with transparent error handling
+
+### Changed
+- **"No Estimates" Policy**: APIs without usage data now raise TokenExtractionError instead of estimates
+- **100% Pricing Accuracy**: All pricing aligned with official OpenAI rates (moderation now FREE)
+- **Transparent Error Handling**: Clear messages for disabled cost tracking vs working APIs
+- **Enhanced Cost Calculation**: Support for dual token pricing and image cost calculation
+- **Coverage Matrix Documentation**: Complete transparency about accurate vs disabled tracking
+
+### Fixed
+- **o3 Model Pricing**: Corrected from 5x overpriced to official rates
+- **Audio Preview Models**: Fixed text vs audio token pricing separation
+- **Moderation Models**: Changed from $0.50 to FREE per official pricing
+- **gpt-image-1**: Proper text token vs image token pricing structure
+
 ## [0.2.2] - 2025-07-27
 
 ### Added

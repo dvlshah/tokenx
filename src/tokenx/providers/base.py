@@ -149,6 +149,7 @@ class ProviderAdapter(BaseExtractor):
         output_tokens: int,
         cached_tokens: int = 0,
         tier: str = "sync",
+        response: Optional[Any] = None,
     ) -> float:
         """
         Calculate cost in USD based on token usage.
