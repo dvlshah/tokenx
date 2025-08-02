@@ -266,6 +266,7 @@ class AnthropicAdapter(ProviderAdapter):
         output_tokens: int,
         cached_tokens: int = 0,  # This is the number of tokens READ from cache (cache_read_input_tokens)
         tier: str = "sync",
+        response: Optional[Any] = None,
     ) -> float:
         """
         Calculate cost in USD based on token usage for Anthropic models.

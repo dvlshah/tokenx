@@ -7,6 +7,8 @@ across all provider adapters in tokenx.
 
 from typing import Any, Callable, List, Optional, Tuple
 
+from .constants import CHARS_PER_TOKEN_ESTIMATE
+
 
 class LLMMeterError(Exception):
     """Base exception for all tokenx errors."""
@@ -113,121 +115,197 @@ def extract_tokens_with_fallbacks(
     response_type = type(response).__name__
 
     try:
-        return extract_func(response)  # type: ignore  # Call the adapter's specific method
+        return extract_func(response)  # type: ignore
     except TokenExtractionError:
-        raise  # Re-raise if the adapter already identified a TokenExtractionError
-    except Exception as e:  # For other, unexpected errors during adapter's attempt
-        original_unexpected_exception = e
-        fallback_attempts = []
+        raise  # Re-raise adapter-identified errors
+    except Exception as e:
+        return _attempt_fallback_extraction(e, response, provider_name, response_type)
 
-        # Fallback 1: Try extracting directly from usage if available (simplified parsing)
-        _usage_data_fb1 = None
-        if hasattr(response, "usage") and response.usage is not None:
-            _usage_data_fb1 = response.usage
-        elif (
-            isinstance(response, dict)
-            and "usage" in response
-            and response["usage"] is not None
-        ):
-            _usage_data_fb1 = response["usage"]
 
-        if _usage_data_fb1:
-            try:
-                fallback_attempts.append("direct usage parsing")
-                _fb1_input, _fb1_output, _fb1_cached = (
-                    None,
-                    None,
-                    0,
-                )  # Initialize to None to check if found
+def _attempt_fallback_extraction(
+    original_exception: Exception, response: Any, provider_name: str, response_type: str
+) -> Tuple[int, int, int]:
+    """Attempt fallback token extraction strategies."""
+    fallback_attempts: List[str] = []
 
-                if hasattr(_usage_data_fb1, "prompt_tokens"):
-                    _fb1_input = getattr(_usage_data_fb1, "prompt_tokens")  # Corrected
-                elif hasattr(_usage_data_fb1, "input_tokens"):
-                    _fb1_input = getattr(_usage_data_fb1, "input_tokens")  # Corrected
+    # Fallback 1: Direct usage parsing
+    tokens = _try_direct_usage_parsing(response, fallback_attempts)
+    if tokens:
+        return tokens
 
-                if hasattr(_usage_data_fb1, "completion_tokens"):
-                    _fb1_output = getattr(
-                        _usage_data_fb1, "completion_tokens"
-                    )  # Corrected
-                elif hasattr(_usage_data_fb1, "output_tokens"):
-                    _fb1_output = getattr(_usage_data_fb1, "output_tokens")  # Corrected
+    # Fallback 2: Content estimation
+    tokens = _try_content_estimation(response, fallback_attempts)
+    if tokens:
+        return tokens
 
-                if hasattr(_usage_data_fb1, "cached_tokens"):
-                    _fb1_cached_val = getattr(_usage_data_fb1, "cached_tokens")
-                    _fb1_cached = _fb1_cached_val if _fb1_cached_val is not None else 0
+    # All fallbacks failed
+    return _raise_fallback_error(
+        original_exception, response, provider_name, response_type, fallback_attempts
+    )
 
-                # Ensure tokens are integers and were actually found/set
-                if isinstance(_fb1_input, int) and isinstance(_fb1_output, int):
-                    return (int(_fb1_input), int(_fb1_output), int(_fb1_cached))
-            except Exception:  # Catch errors during this specific fallback attempt
-                pass
 
-        # Second fallback: Try parsing choices if available
-        try:
-            fallback_attempts.append("choices content estimation")
-            if hasattr(response, "choices") and response.choices:
-                content = ""
-                choice = response.choices[0]  # Assuming choices is not empty
-                if hasattr(choice, "message") and hasattr(choice.message, "content"):
-                    content = choice.message.content
-                elif isinstance(choice, dict) and "message" in choice:
-                    message_dict = choice["message"]
-                    if isinstance(message_dict, dict) and "content" in message_dict:
-                        content = message_dict["content"]
+def _try_direct_usage_parsing(
+    response: Any, fallback_attempts: List[str]
+) -> Optional[Tuple[int, int, int]]:
+    """Try to extract tokens directly from usage data."""
+    usage_data = _extract_usage_data(response)
+    if not usage_data:
+        return None
 
-                # Ensure content is a string before len()
-                content_str = content if isinstance(content, str) else ""
-                output_tokens_fb2 = max(1, len(content_str) // 4)
+    try:
+        fallback_attempts.append("direct usage parsing")
 
-                input_tokens_fb2 = 0  # Default if not found
-                if hasattr(response, "prompt_tokens") and isinstance(
-                    response.prompt_tokens, int
-                ):
-                    input_tokens_fb2 = response.prompt_tokens
-                elif (
-                    hasattr(response, "usage")
-                    and hasattr(response.usage, "prompt_tokens")
-                    and isinstance(response.usage.prompt_tokens, int)
-                ):
-                    input_tokens_fb2 = response.usage.prompt_tokens
-                elif isinstance(response, dict):
-                    if "prompt_tokens" in response and isinstance(
-                        response["prompt_tokens"], int
-                    ):
-                        input_tokens_fb2 = response["prompt_tokens"]
-                    elif (
-                        "usage" in response
-                        and isinstance(response["usage"], dict)
-                        and "prompt_tokens" in response["usage"]
-                        and isinstance(response["usage"]["prompt_tokens"], int)
-                    ):
-                        input_tokens_fb2 = response["usage"]["prompt_tokens"]
-
-                return (input_tokens_fb2, output_tokens_fb2, 0)
-        except Exception:  # Catch errors during this specific fallback attempt
-            pass
-
-        # All fallbacks failed, raise a detailed error
-        available_attrs = dir(response) if hasattr(response, "__dict__") else "N/A"
-        if isinstance(available_attrs, list) and len(available_attrs) > 20:
-            available_attrs = available_attrs[:20] + ["..."]
-
-        error_msg = (
-            f"Failed to extract tokens from response after trying fallbacks.\n"
-            f"Initial adapter error: [{type(original_unexpected_exception).__name__}] {str(original_unexpected_exception)}\n\n"
-            f"Response details:\n"
-            f"- Type: {response_type}\n"
-            f"- Available attributes: {str(available_attrs)}\n\n"  # Ensure available_attrs is a string
-            f"Tried fallback methods: {', '.join(fallback_attempts) if fallback_attempts else 'None'}\n\n"
-            f"Tips:\n"
-            f"- Check if your provider SDK version is supported\n"
-            f"- Ensure your model is included in model_prices.yaml\n"
-            f"- For streaming responses, consider aggregating usage after completion\n"
-            f"- If using a custom client, ensure it returns proper usage data"
+        # Extract token fields
+        input_tokens = _get_token_field(usage_data, ["prompt_tokens", "input_tokens"])
+        output_tokens = _get_token_field(
+            usage_data, ["completion_tokens", "output_tokens"]
         )
-        raise TokenExtractionError(
-            error_msg, provider_name, response_type
-        ) from original_unexpected_exception
+        cached_tokens = _get_token_field(usage_data, ["cached_tokens"], default=0)
+
+        if isinstance(input_tokens, int) and isinstance(output_tokens, int):
+            return (
+                input_tokens,
+                output_tokens,
+                int(cached_tokens) if cached_tokens is not None else 0,
+            )
+    except Exception:
+        pass
+    return None
+
+
+def _try_content_estimation(
+    response: Any, fallback_attempts: List[str]
+) -> Optional[Tuple[int, int, int]]:
+    """Try to estimate tokens from response content."""
+    try:
+        fallback_attempts.append("choices content estimation")
+
+        # Extract content from choices
+        content = _extract_choice_content(response)
+        if content is None:
+            return None
+
+        # Estimate output tokens using constant
+        output_tokens = max(1, len(content) // CHARS_PER_TOKEN_ESTIMATE)
+
+        # Try to find input tokens
+        input_tokens = _find_input_tokens(response)
+
+        return (input_tokens, output_tokens, 0)
+    except Exception:
+        pass
+    return None
+
+
+def _extract_usage_data(response: Any) -> Any:
+    """Extract usage data from response."""
+    if hasattr(response, "usage") and response.usage is not None:
+        return response.usage
+    elif (
+        isinstance(response, dict)
+        and "usage" in response
+        and response["usage"] is not None
+    ):
+        return response["usage"]
+    return None
+
+
+def _get_token_field(
+    usage_data: Any, field_names: List[str], default: Optional[int] = None
+) -> Optional[int]:
+    """Get a token field from usage data, trying multiple field names."""
+    for field_name in field_names:
+        if hasattr(usage_data, field_name):
+            value = getattr(usage_data, field_name)
+            if value is not None:
+                try:
+                    return int(value)
+                except (ValueError, TypeError):
+                    continue
+        elif isinstance(usage_data, dict) and field_name in usage_data:
+            value = usage_data[field_name]
+            if value is not None:
+                try:
+                    return int(value)
+                except (ValueError, TypeError):
+                    continue
+    return default
+
+
+def _extract_choice_content(response: Any) -> Optional[str]:
+    """Extract content from response choices."""
+    if not hasattr(response, "choices") or not response.choices:
+        return None
+
+    choice = response.choices[0]
+
+    # Try object-style access
+    if hasattr(choice, "message") and hasattr(choice.message, "content"):
+        content = choice.message.content
+        return content if isinstance(content, str) else ""
+
+    # Try dict-style access
+    if isinstance(choice, dict) and "message" in choice:
+        message_dict = choice["message"]
+        if isinstance(message_dict, dict) and "content" in message_dict:
+            content = message_dict["content"]
+            return content if isinstance(content, str) else ""
+
+    return None
+
+
+def _find_input_tokens(response: Any) -> int:
+    """Find input tokens from various response locations."""
+    # Direct attribute access
+    if hasattr(response, "prompt_tokens") and isinstance(response.prompt_tokens, int):
+        return response.prompt_tokens
+
+    # Usage attribute access
+    if hasattr(response, "usage") and hasattr(response.usage, "prompt_tokens"):
+        tokens = response.usage.prompt_tokens
+        if isinstance(tokens, int):
+            return tokens
+
+    # Dict access
+    if isinstance(response, dict):
+        if "prompt_tokens" in response and isinstance(response["prompt_tokens"], int):
+            return response["prompt_tokens"]
+        elif "usage" in response and isinstance(response["usage"], dict):
+            usage = response["usage"]
+            if "prompt_tokens" in usage and isinstance(usage["prompt_tokens"], int):
+                return usage["prompt_tokens"]
+
+    return 0  # Default fallback
+
+
+def _raise_fallback_error(
+    original_exception: Exception,
+    response: Any,
+    provider_name: str,
+    response_type: str,
+    fallback_attempts: List[str],
+) -> Tuple[int, int, int]:
+    """Raise a detailed error when all fallbacks fail."""
+    available_attrs = dir(response) if hasattr(response, "__dict__") else "N/A"
+    if isinstance(available_attrs, list) and len(available_attrs) > 20:
+        available_attrs = available_attrs[:20] + ["..."]
+
+    error_msg = (
+        f"Failed to extract tokens from response after trying fallbacks.\n"
+        f"Initial adapter error: [{type(original_exception).__name__}] {str(original_exception)}\n\n"
+        f"Response details:\n"
+        f"- Type: {response_type}\n"
+        f"- Available attributes: {str(available_attrs)}\n\n"
+        f"Tried fallback methods: {', '.join(fallback_attempts) if fallback_attempts else 'None'}\n\n"
+        f"Tips:\n"
+        f"- Check if your provider SDK version is supported\n"
+        f"- Ensure your model is included in model_prices.yaml\n"
+        f"- For streaming responses, consider aggregating usage after completion\n"
+        f"- If using a custom client, ensure it returns proper usage data"
+    )
+    raise TokenExtractionError(
+        error_msg, provider_name, response_type
+    ) from original_exception
 
 
 def enhance_provider_adapter(adapter: Any) -> Any:

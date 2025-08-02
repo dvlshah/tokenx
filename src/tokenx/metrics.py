@@ -20,6 +20,12 @@ import time
 from typing import Any, Callable, Dict, Tuple, Union
 
 from .cost_calc import CostCalculator
+from .constants import (
+    DEFAULT_TIER,
+    DEFAULT_ENABLE_CACHING,
+    CURRENCY_USD,
+    PROVIDER_ANTHROPIC,
+)
 
 ResponseT = Any  # Provider response object type alias
 ReturnT = Union[ResponseT, Tuple[ResponseT, Dict[str, Any]]]
@@ -72,8 +78,8 @@ def measure_cost(
     provider: str,
     model: str,
     *,
-    tier: str = "sync",
-    enable_caching: bool = True,
+    tier: str = DEFAULT_TIER,
+    enable_caching: bool = DEFAULT_ENABLE_CACHING,
 ) -> Callable[..., Any]:
     """
     Adds `cost_usd` and token counts to .metrics by analyzing response usage.
@@ -107,11 +113,12 @@ def measure_cost(
             # Cost is calculated by the provider adapter.
             cost_metrics = calculator.costed()(lambda: resp)()
             cost_metrics["cost_usd"] = cost_metrics["usd"]
+            cost_metrics["currency"] = CURRENCY_USD  # Explicit currency indicator
 
             # Add provider-specific metrics if the adapter supports extracting them
             if (
                 hasattr(calculator.provider, "_extract_anthropic_usage_fields")
-                and provider == "anthropic"
+                and provider == PROVIDER_ANTHROPIC
             ):
                 try:
                     # Need to extract usage data first to pass to _extract_anthropic_usage_fields
@@ -157,14 +164,30 @@ def measure_cost(
         async def _aw(*args: Any, **kwargs: Any) -> Any:
             calculator = get_calculator()
             resp = await fn(*args, **kwargs)
-            # Pass the original response object to get_cost_metrics
-            return _merge_metrics(resp, **get_cost_metrics(resp, calculator))
+            # Extract actual response if it's a tuple from latency decorator
+            actual_response = (
+                resp[0]
+                if isinstance(resp, tuple)
+                and len(resp) == 2
+                and isinstance(resp[1], dict)
+                else resp
+            )
+            # Pass the actual response object to get_cost_metrics
+            return _merge_metrics(resp, **get_cost_metrics(actual_response, calculator))
 
         def _sync(*args: Any, **kwargs: Any) -> Any:
             calculator = get_calculator()
             resp = fn(*args, **kwargs)
-            # Pass the original response object to get_cost_metrics
-            return _merge_metrics(resp, **get_cost_metrics(resp, calculator))
+            # Extract actual response if it's a tuple from latency decorator
+            actual_response = (
+                resp[0]
+                if isinstance(resp, tuple)
+                and len(resp) == 2
+                and isinstance(resp[1], dict)
+                else resp
+            )
+            # Pass the actual response object to get_cost_metrics
+            return _merge_metrics(resp, **get_cost_metrics(actual_response, calculator))
 
         return functools.wraps(fn)(_aw if is_async else _sync)
 

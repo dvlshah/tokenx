@@ -44,10 +44,10 @@ print(m["cost_usd"], "USD |", m["latency_ms"], "ms")
 
 Integrating with LLM APIs often involves hidden costs and variable performance. Manually tracking token usage and calculating costs across different models and providers is tedious and error-prone. `tokenx` simplifies this by:
 
-*   **Effortless Integration:** Add monitoring with simple decorators, no need to refactor your API call logic.
-*   **Accurate Cost Tracking:** Uses up-to-date, configurable pricing (including caching discounts) for precise cost analysis.
-*   **Performance Insights:** Easily measure API call latency to identify bottlenecks.
-*   **Multi-Provider Ready:** Designed to consistently monitor costs across different LLM vendors (OpenAI currently supported, more coming soon!).
+*   **Decorator-based monitoring:** Add cost and latency tracking with simple decorators.
+*   **Accurate cost calculation:** Uses configurable pricing with caching discounts.
+*   **Latency measurement:** Measures API call response times.
+*   **Multi-provider support:** Supports OpenAI and Anthropic APIs.
 
 ---
 
@@ -74,12 +74,15 @@ flowchart LR
 
 ## 💡 Features at a glance
 
-* **Track & save money** – live USD costing with cached‑token discounts
-* **Trace latency** – pinpoint slow models or network hops
-* **Plug‑&‑play decorators** – wrap any sync or async function
-* **Provider plug‑ins** – OpenAI today, Anthropic & Gemini next
-* **Typed** – 100 % `py.typed`, 95 %+ mypy coverage
-* **Zero deps** – slims Docker images
+* **Cost tracking** – USD costing with cached‑token discounts
+* **Dual token pricing** – separate audio/text token costs for new models
+* **No estimates policy** – only real usage data, accuracy guaranteed
+* **Latency measurement** – measures API response times
+* **Decorator interface** – works with sync and async functions
+* **Provider support** – OpenAI (47+ models/APIs), Anthropic
+* **Typed** – full type annotations
+* **Minimal deps** – tiktoken and pyyaml only
+* **Enterprise-grade** – SOLID principles, comprehensive error handling, production-ready architecture
 
 ---
 
@@ -147,7 +150,41 @@ print(f"Output Tokens: {metrics_claude['output_tokens']}")
 # For Anthropic, 'cached_tokens' reflects 'cache_read_input_tokens'.
 # 'cache_creation_input_tokens' will also be in metrics if caching beta is active.
 print(f"Cached (read) tokens: {metrics_claude.get('cached_tokens', 0)}")
-print(f"Cache creation tokens: {metrics_claude.get('cache_creation_input_tokens', 'N/A (requires caching beta)')}")```
+print(f"Cache creation tokens: {metrics_claude.get('cache_creation_input_tokens', 'N/A (requires caching beta)')}")
+```
+
+Here's how to monitor OpenAI's new audio models with dual token pricing:
+
+```python
+from tokenx.metrics import measure_cost, measure_latency
+from openai import OpenAI
+
+@measure_latency
+@measure_cost(provider="openai", model="gpt-4o-mini-transcribe")
+def transcribe_audio(audio_file_path: str):
+    client = OpenAI()
+    with open(audio_file_path, "rb") as audio_file:
+        return client.audio.transcriptions.create(
+            model="gpt-4o-mini-transcribe",
+            file=audio_file,
+            response_format="verbose_json"
+        )
+
+@measure_latency  
+@measure_cost(provider="openai", model="gpt-4o-mini-tts")
+def generate_speech(text: str):
+    client = OpenAI()
+    return client.audio.speech.create(
+        model="gpt-4o-mini-tts",
+        voice="alloy",
+        input=text
+    )
+
+# Real usage data with separate audio/text token costs
+response, metrics = transcribe_audio("path/to/audio.mp3")  # Replace with actual audio file path
+print(f"Transcription cost: ${metrics['cost_usd']:.6f}")  # Combines audio + text tokens
+print(f"Audio tokens: {metrics.get('audio_input_tokens', 0)}")
+print(f"Text tokens: {metrics['input_tokens']}")
 ```
 
 ## 🔍 Detailed Usage
@@ -221,19 +258,34 @@ async def main():
 
 ## 🔄 Provider Compatibility
 
-tokenx is designed to work with multiple LLM providers. Here's the current compatibility matrix:
+tokenx is designed to work with multiple LLM providers. Here's the current compatibility overview:
 
-| Provider | Status | SDK Version | Response Formats | Models | Cache Metrics Support |
-|----------|--------|-------------|-----------------|--------|-----------------------|
-| OpenAI | ✅ | >= 1.0.0 | Dict, Pydantic | All models (GPT-4, GPT-3.5, etc.) | ✅ (cached_tokens) |
-| Anthropic | ✅ | >= 0.20.0 (approx for cache beta fields) | Dict, Pydantic-like | Claude models (Claude 3 Opus, Sonnet, Haiku) | ✅ (Prompt Caching Beta via cached_tokens & cache_creation_input_tokens) |
-| Google | 🔜 | - | - | Gemini models (coming soon) | - |
+| Provider | Status | SDK Version | Supported APIs | Cache Support |
+|----------|--------|-------------|----------------|---------------|
+| OpenAI | ✅ | >= 1.0.0 | Chat, Responses, Embeddings, Audio (Transcription/TTS), Moderation, Images | ✅ |
+| Anthropic | ✅ | >= 0.20.0 | Messages | ✅ |
+
+📊 **[View Complete Coverage Matrix](docs/COVERAGE_MATRIX.md)** - Detailed breakdown of all supported APIs, models, and features
 
 ### OpenAI Support Details
 
 - **SDK Versions**: Compatible with OpenAI Python SDK v1.0.0 and newer.
 - **Response Formats**: Supports dictionary responses from older SDK versions and Pydantic model responses from newer SDK versions, with cached token extraction from `prompt_tokens_details.cached_tokens`.
-- **API Types**: Supports Chat Completions API and Traditional Completions API, with support for the newer Responses API coming soon.
+- **API Types**: 
+  - ✅ Chat Completions API
+  - ✅ Responses API (advanced interface)
+  - ✅ Embeddings API
+  - ✅ Audio Transcription API (token-based models)
+  - ✅ Text-to-Speech API (token-based models)
+  - ✅ Audio Preview API
+  - ✅ Realtime Audio API
+  - ✅ Moderation API
+  - ✅ Image Generation API (gpt-image-1 with hybrid pricing)
+- **Pricing Features**:
+  - ✅ Dual token pricing (separate audio/text tokens)
+  - ✅ Hybrid pricing (tokens + per-image costs)
+  - ✅ No estimates policy (accuracy guaranteed)
+- **Models**: 47+ models including o3, o4-mini, gpt-4o-transcribe, gpt-4o-mini-tts, gpt-image-1
 
 ### Anthropic Support Details
 
@@ -256,6 +308,19 @@ openai:
       in: 2.50        # USD per million input tokens
       cached_in: 1.25 # USD per million cached tokens (OpenAI specific)
       out: 10.00      # USD per million output tokens
+      
+  # Audio models with dual token pricing
+  gpt-4o-mini-transcribe:
+    sync:
+      in: 1.25        # USD per million input tokens (text tokens)
+      out: 5.00       # USD per million output tokens (text tokens)
+      audio_in: 3.00  # USD per million input tokens (audio tokens)
+      
+  gpt-4o-mini-tts:
+    sync:
+      in: 0.60        # USD per million input tokens (text tokens)
+      audio_out: 12.00  # USD per million output tokens (audio tokens)
+      
 anthropic:
   claude-3-haiku-20240307:
     sync:
@@ -332,7 +397,7 @@ class CustomAdapter(ProviderAdapter):
     @property
     def provider_name(self) -> str:
         return "custom"
-    
+
     def usage_from_response(self, response: Any) -> Usage:
         # Extract standardized usage information from provider response
         return Usage(
@@ -341,16 +406,16 @@ class CustomAdapter(ProviderAdapter):
             cached_tokens=getattr(response.usage, 'cached_tokens', 0),
             extra_fields={'provider': 'custom'}
         )
-    
+
     def matches_function(self, func: Any, args: tuple, kwargs: dict) -> bool:
         # Detect if this function uses your provider
         return "custom" in kwargs.get("model", "").lower()
-    
+
     def detect_model(self, func: Any, args: tuple, kwargs: dict) -> Optional[str]:
         return kwargs.get("model")
-    
-    def calculate_cost(self, model: str, input_tokens: int, 
-                      output_tokens: int, cached_tokens: int = 0, 
+
+    def calculate_cost(self, model: str, input_tokens: int,
+                      output_tokens: int, cached_tokens: int = 0,
                       tier: str = "sync") -> float:
         # Implement your pricing logic
         return input_tokens * 0.001 + output_tokens * 0.002
