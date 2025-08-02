@@ -299,7 +299,7 @@ def _raise_fallback_error(
         f"Tried fallback methods: {', '.join(fallback_attempts) if fallback_attempts else 'None'}\n\n"
         f"Tips:\n"
         f"- Check if your provider SDK version is supported\n"
-        f"- Ensure your model is included in model_prices.yaml\n"
+        f"- Ensure your model is included in the pricing configuration\n"
         f"- For streaming responses, consider aggregating usage after completion\n"
         f"- If using a custom client, ensure it returns proper usage data"
     )
@@ -358,8 +358,8 @@ def enhance_provider_adapter(adapter: Any) -> Any:
                     f"Price information not found for the specified configuration.\n"
                     f"Original error: {str(e)}\n\n"
                     f"Tips:\n"
-                    f"- Check if the model name exactly matches the entries in model_prices.yaml\n"
-                    f"- Update your model_prices.yaml with the latest pricing\n"
+                    f"- Check if the model name exactly matches the entries in the pricing data\n"
+                    f"- Pricing is automatically updated from remote sources\n"
                     f"- Consider using a similar model with known pricing"
                 )
                 raise PricingError(

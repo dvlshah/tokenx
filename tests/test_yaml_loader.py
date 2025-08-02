@@ -1,15 +1,15 @@
-from pathlib import Path
+import os
 import yaml
 import tempfile
 from tokenx.yaml_loader import load_yaml_prices
 
 
 class TestYAMLLoader:
-    def test_load_multiformat_yaml(self, monkeypatch):
+    def test_load_multiformat_yaml(self):
         """Test loading the new multi-provider YAML format."""
 
         # Create a temporary YAML file with the new format
-        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml") as tmp:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
             yaml.dump(
                 {
                     "openai": {
@@ -18,10 +18,12 @@ class TestYAMLLoader:
                 },
                 tmp,
             )
-            tmp.flush()
+            tmp_path = tmp.name
 
-            # Monkeypatch the YAML path to use our temporary file
-            monkeypatch.setattr("tokenx.yaml_loader.YAML_PATH", Path(tmp.name))
+        try:
+            # Use user override to test with our temporary file
+            original_override = os.environ.get("TOKENX_PRICES_PATH")
+            os.environ["TOKENX_PRICES_PATH"] = tmp_path
 
             # Clear the cache to ensure the file is reloaded
             load_yaml_prices.cache_clear()
@@ -30,6 +32,15 @@ class TestYAMLLoader:
             assert "openai" in prices
             assert "gpt-4o" in prices["openai"]
             assert prices["openai"]["gpt-4o"]["sync"]["in"] == 2.50 / 1e6
+
+        finally:
+            # Cleanup
+            os.unlink(tmp_path)
+            if original_override:
+                os.environ["TOKENX_PRICES_PATH"] = original_override
+            else:
+                os.environ.pop("TOKENX_PRICES_PATH", None)
+            load_yaml_prices.cache_clear()
 
     def test_backward_compatibility(self):
         """Test backward compatibility with old format."""
