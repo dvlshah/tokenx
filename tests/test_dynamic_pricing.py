@@ -9,21 +9,38 @@ from pathlib import Path
 from unittest.mock import patch
 import yaml
 
-from src.tokenx.yaml_loader import (
-    load_yaml_prices,
-    _fetch_remote_prices,
-    _get_base_prices,
-    _load_user_override,
-)
+try:
+    # Development/local testing
+    from src.tokenx.yaml_loader import (
+        load_yaml_prices,
+        _fetch_remote_prices,
+        _get_base_prices,
+        _load_user_override,
+    )
+except ImportError:
+    # CI/installed package testing  
+    from tokenx.yaml_loader import (
+        load_yaml_prices,
+        _fetch_remote_prices,
+        _get_base_prices,
+        _load_user_override,
+    )
 
 
 def test_config_constants():
     """Test that pricing configuration constants are set correctly."""
-    from src.tokenx.yaml_loader import (
-        REMOTE_PRICES_URL,
-        CACHE_TTL_HOURS,
-        REMOTE_FALLBACK_URLS,
-    )
+    try:
+        from src.tokenx.yaml_loader import (
+            REMOTE_PRICES_URL,
+            CACHE_TTL_HOURS,
+            REMOTE_FALLBACK_URLS,
+        )
+    except ImportError:
+        from tokenx.yaml_loader import (
+            REMOTE_PRICES_URL,
+            CACHE_TTL_HOURS,
+            REMOTE_FALLBACK_URLS,
+        )
 
     assert (
         REMOTE_PRICES_URL
@@ -145,7 +162,10 @@ def test_environment_variable_overrides():
 
         # Reload module to pick up new env var
         import importlib
-        from src.tokenx import yaml_loader
+        try:
+            from src.tokenx import yaml_loader
+        except ImportError:
+            from tokenx import yaml_loader
 
         importlib.reload(yaml_loader)
 
@@ -160,6 +180,9 @@ def test_environment_variable_overrides():
 
         # Reload to restore original state
         import importlib
-        from src.tokenx import yaml_loader
+        try:
+            from src.tokenx import yaml_loader
+        except ImportError:
+            from tokenx import yaml_loader
 
         importlib.reload(yaml_loader)
