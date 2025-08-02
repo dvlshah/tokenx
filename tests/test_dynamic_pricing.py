@@ -18,7 +18,7 @@ try:
         _load_user_override,
     )
 except ImportError:
-    # CI/installed package testing  
+    # CI/installed package testing
     from tokenx.yaml_loader import (
         load_yaml_prices,
         _fetch_remote_prices,
@@ -162,6 +162,7 @@ def test_environment_variable_overrides():
 
         # Reload module to pick up new env var
         import importlib
+
         try:
             from src.tokenx import yaml_loader
         except ImportError:
@@ -180,6 +181,7 @@ def test_environment_variable_overrides():
 
         # Reload to restore original state
         import importlib
+
         try:
             from src.tokenx import yaml_loader
         except ImportError:
