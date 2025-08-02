@@ -74,15 +74,12 @@ flowchart LR
 
 ## 💡 Features at a glance
 
-* **Cost tracking** – USD costing with cached‑token discounts
-* **Dual token pricing** – separate audio/text token costs for new models
-* **No estimates policy** – only real usage data, accuracy guaranteed
+* **Cost tracking** – USD costing with cached‑token discounts (if applicable)
+* **No estimates policy** – only real usage data, numbers will match what you see in the portal
 * **Latency measurement** – measures API response times
 * **Decorator interface** – works with sync and async functions
-* **Provider support** – OpenAI (47+ models/APIs), Anthropic
-* **Typed** – full type annotations
+* **Provider support** – OpenAI, Anthropic, adding more providers soon!
 * **Minimal deps** – tiktoken and pyyaml only
-* **Enterprise-grade** – SOLID principles, comprehensive error handling, production-ready architecture
 
 ---
 
