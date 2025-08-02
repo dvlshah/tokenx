@@ -163,7 +163,11 @@ def _try_direct_usage_parsing(
         cached_tokens = _get_token_field(usage_data, ["cached_tokens"], default=0)
 
         if isinstance(input_tokens, int) and isinstance(output_tokens, int):
-            return (input_tokens, output_tokens, int(cached_tokens) if cached_tokens is not None else 0)
+            return (
+                input_tokens,
+                output_tokens,
+                int(cached_tokens) if cached_tokens is not None else 0,
+            )
     except Exception:
         pass
     return None
