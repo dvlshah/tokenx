@@ -27,7 +27,7 @@
 - **Moderation Models**: Changed from $0.50 to FREE per official pricing
 - **gpt-image-1**: Proper text token vs image token pricing structure
 
-## [0.2.2] - 2025-07-27
+## [0.2.5] - 2025-07-27
 
 ### Added
 - **BaseExtractor Interface**: Formal abstract base class for provider adapters
