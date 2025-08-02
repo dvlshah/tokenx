@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.7] - 2025-08-02
+
+### Changed
+- **Dynamic Pricing System**: Removed bundled pricing file, always fetch latest from GitHub
+- **Simplified Architecture**: No minimal fallback, clean remote-only pricing configuration
+- **Environment Configuration**: All URLs and settings configurable via environment variables
+- **Enhanced Pytest Integration**: Added comprehensive tests for dynamic pricing system
+
+### Removed
+- **Bundled model_prices.yaml**: No longer included in package distribution
+- **Complex Configuration**: Removed unnecessary config file, simplified to constants with env overrides
+
 ## [0.2.6] - 2025-07-30
 
 ### Added

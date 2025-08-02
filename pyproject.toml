@@ -1,6 +1,6 @@
 [project]
 name            = "tokenx-core"
-version         = "0.2.6"
+version         = "0.2.7"
 description     = "Cross-provider LLM token tracking and cost calculation"
 authors         = [{ name = "Deval Shah", email = "deval@neurink.ai" }]
 license         = { file = "LICENSE" }
@@ -58,11 +58,8 @@ package-dir = {"" = "src"}
 where = ["src"]          # scan only the src/ tree
 namespaces = false       # plain packages, not namespace pkgs
 
-[tool.setuptools.package-data]
-"tokenx" = ["model_prices.yaml"]
-
 [tool.pytest.ini_options]
-addopts = "-q -m 'not real_api'" # Skip real_api tests by default
+addopts = "-v -m 'not real_api'" # Skip real_api tests by default
 markers = [
   "asyncio: marks tests that use async/await syntax",
   "real_api: marks tests requiring live API keys and network access",

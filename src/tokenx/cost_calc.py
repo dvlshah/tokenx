@@ -2,7 +2,7 @@
 LLM Cost Calculator (YAML-driven, provider-aware)
 ================================================
 
-- Loads model prices from `model_prices.yaml` at import-time
+- Loads model prices dynamically from remote sources with local caching
 - Supports multiple providers (OpenAI, Anthropic, Gemini)
 - Handles pricing tiers and prompt-caching discounts
 - Provides:

@@ -167,7 +167,7 @@ def transcribe_audio(audio_file_path: str):
             response_format="verbose_json"
         )
 
-@measure_latency  
+@measure_latency
 @measure_cost(provider="openai", model="gpt-4o-mini-tts")
 def generate_speech(text: str):
     client = OpenAI()
@@ -268,7 +268,7 @@ tokenx is designed to work with multiple LLM providers. Here's the current compa
 
 - **SDK Versions**: Compatible with OpenAI Python SDK v1.0.0 and newer.
 - **Response Formats**: Supports dictionary responses from older SDK versions and Pydantic model responses from newer SDK versions, with cached token extraction from `prompt_tokens_details.cached_tokens`.
-- **API Types**: 
+- **API Types**:
   - ✅ Chat Completions API
   - ✅ Responses API (advanced interface)
   - ✅ Embeddings API
@@ -305,19 +305,19 @@ openai:
       in: 2.50        # USD per million input tokens
       cached_in: 1.25 # USD per million cached tokens (OpenAI specific)
       out: 10.00      # USD per million output tokens
-      
+
   # Audio models with dual token pricing
   gpt-4o-mini-transcribe:
     sync:
       in: 1.25        # USD per million input tokens (text tokens)
       out: 5.00       # USD per million output tokens (text tokens)
       audio_in: 3.00  # USD per million input tokens (audio tokens)
-      
+
   gpt-4o-mini-tts:
     sync:
       in: 0.60        # USD per million input tokens (text tokens)
       audio_out: 12.00  # USD per million output tokens (audio tokens)
-      
+
 anthropic:
   claude-3-haiku-20240307:
     sync:
@@ -328,20 +328,49 @@ anthropic:
   # all input_tokens (including cache_read_input_tokens) are billed at the 'in' rate.
 ```
 
-### Error Handling
+### How Pricing Configuration is loaded?
 
-tokenx provides detailed error messages to help diagnose issues:
+By default, tokenx will:
+- Check for updated pricing daily (24-hour cache)
+- Automatically fetch the latest prices from the official repository
+- Use stale cache if network is unavailable
+- Show clear error if no pricing data available
+
+The price yaml will be automatically uploaded in the remote as the pricing information is updated by supported providers.
 
 ```python
-from tokenx.errors import TokenExtractionError, PricingError
+# First run - fetches latest prices
+from tokenx import CostCalculator
+calc = CostCalculator.for_provider("openai", "gpt-4o")
+# Output: "tokenx: Fetching latest model prices..."
+# Output: "tokenx: Cached latest prices locally."
 
-try:
-    calculator = CostCalculator.for_provider("openai", "gpt-4o")
-    cost = calculator.cost_from_response(response)
-except TokenExtractionError as e:
-    print(f"Token extraction failed: {e}")
-except PricingError as e:
-    print(f"Pricing error: {e}")
+# Subsequent runs - uses cache
+calc2 = CostCalculator.for_provider("openai", "gpt-4o-mini")
+# Output: "tokenx: Using cached model prices."
+```
+
+#### Custom Pricing Overrides
+
+For enterprise users with custom pricing contracts:
+
+```bash
+# Set environment variable to your custom pricing file
+export TOKENX_PRICES_PATH="/path/to/my-custom-pricing.yaml"
+```
+
+Create a YAML file with only the prices you want to override:
+
+```yaml
+# my-custom-pricing.yaml
+openai:
+  gpt-4o:
+    sync:
+      in: 1.50   # Custom rate: $1.50 per million tokens
+      out: 8.00  # Custom rate: $8.00 per million tokens
+
+  # You only need to specify what you're overriding
+  # All other models use the standard pricing
 ```
 
 ## 📊 Example Metrics Output

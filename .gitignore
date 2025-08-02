@@ -138,3 +138,4 @@ cython_debug/
 
 # VSCode files
 .vscode/
+test_real_openai_coverage.py
