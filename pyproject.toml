@@ -1,6 +1,6 @@
 [project]
 name            = "tokenx-core"
-version         = "0.2.7"
+version         = "0.2.8"
 description     = "Cross-provider LLM token tracking and cost calculation"
 authors         = [{ name = "Deval Shah", email = "deval@neurink.ai" }]
 license         = { file = "LICENSE" }
@@ -57,6 +57,9 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]          # scan only the src/ tree
 namespaces = false       # plain packages, not namespace pkgs
+
+[tool.setuptools.package-data]
+tokenx = ["model_prices.yaml"]
 
 [tool.pytest.ini_options]
 addopts = "-v -m 'not real_api'" # Skip real_api tests by default

@@ -146,6 +146,32 @@ def _get_base_prices() -> Dict[str, Any]:
         if cached_prices is not None:
             return cached_prices
 
+    # Fall back to bundled pricing file
+    try:
+        import pkg_resources  # type: ignore
+
+        bundled_path = pkg_resources.resource_filename("tokenx", "model_prices.yaml")
+        print("tokenx: Loading bundled pricing as last resort.")
+        with open(bundled_path, "r", encoding="utf-8") as f:
+            bundled_prices = yaml.safe_load(f)
+            if bundled_prices:
+                return bundled_prices
+    except Exception:
+        # Try direct path approach
+        try:
+            from pathlib import Path
+
+            current_dir = Path(__file__).parent
+            bundled_path = current_dir / "model_prices.yaml"
+            if bundled_path.exists():
+                print("tokenx: Loading bundled pricing as last resort.")
+                with open(bundled_path, "r", encoding="utf-8") as f:
+                    bundled_prices = yaml.safe_load(f)
+                    if bundled_prices:
+                        return bundled_prices
+        except Exception:
+            pass
+
     # No pricing data available
     raise RuntimeError(
         "tokenx: Unable to load pricing data. "

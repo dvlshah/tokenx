@@ -26,13 +26,58 @@ from .errors import TokenExtractionError
 from .constants import DEFAULT_TIER, DEFAULT_ENABLE_CACHING, PROVIDER_OPENAI
 
 
-# For backward compatibility with existing code
-PRICE_TABLE = load_yaml_prices()
-PRICE_PER_TOKEN = {
-    model: tiers[DEFAULT_TIER]
-    for model, tiers in PRICE_TABLE.get(PROVIDER_OPENAI, {}).items()
-    if DEFAULT_TIER in tiers
-}
+# Global cache for pricing data - loaded lazily on first use
+_PRICE_TABLE_CACHE = None
+_PRICE_PER_TOKEN_CACHE = None
+
+
+def _ensure_pricing_loaded():
+    """Ensure pricing data is loaded, with helpful error message for new users."""
+    global _PRICE_TABLE_CACHE, _PRICE_PER_TOKEN_CACHE
+
+    if _PRICE_TABLE_CACHE is None:
+        try:
+            _PRICE_TABLE_CACHE = load_yaml_prices()
+            # Legacy OpenAI-only pricing dict for backward compatibility
+            # PRICE_PER_TOKEN was designed when TokenX only supported OpenAI
+            # and expects a flat {model: prices} structure, not {provider: {model: prices}}
+            _PRICE_PER_TOKEN_CACHE = {
+                model: tiers[DEFAULT_TIER]
+                for model, tiers in _PRICE_TABLE_CACHE.get(PROVIDER_OPENAI, {}).items()
+                if DEFAULT_TIER in tiers
+            }
+        except Exception as e:
+            # Provide helpful error message for new users
+            raise RuntimeError(
+                f"Failed to load pricing data: {e}\n\n"
+                "💡 Quick Fix for New Users:\n"
+                "1. Check your internet connection for automatic pricing updates\n"
+                "2. Or set custom pricing: export TOKENX_PRICES_PATH=/path/to/pricing.yaml\n"
+                "3. See https://github.com/dvlshah/tokenx#dynamic-pricing for details\n"
+            ) from e
+
+
+# For backward compatibility - these are now lazy-loaded module attributes
+def _get_price_table():
+    """Backward compatibility: lazy-loaded pricing table."""
+    _ensure_pricing_loaded()
+    return _PRICE_TABLE_CACHE
+
+
+def _get_price_per_token():
+    """Backward compatibility: lazy-loaded OpenAI pricing."""
+    _ensure_pricing_loaded()
+    return _PRICE_PER_TOKEN_CACHE
+
+
+# Module-level lazy attributes using __getattr__ (Python 3.7+)
+def __getattr__(name):
+    """Lazy loading for backward compatibility attributes."""
+    if name == "PRICE_TABLE":
+        return _get_price_table()
+    elif name == "PRICE_PER_TOKEN":
+        return _get_price_per_token()
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 class CostCalculator:
