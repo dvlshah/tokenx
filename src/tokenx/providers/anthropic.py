@@ -138,8 +138,12 @@ class AnthropicAdapter(ProviderAdapter):
                     result[key] = None
 
         # For cache fields, ensure they are int, defaulting to 0 if conversion fails
-        for key in ["cache_read_input_tokens", "cache_creation_input_tokens",
-                   "cache_creation_5m_tokens", "cache_creation_1h_tokens"]:
+        for key in [
+            "cache_read_input_tokens",
+            "cache_creation_input_tokens",
+            "cache_creation_5m_tokens",
+            "cache_creation_1h_tokens",
+        ]:
             current_val = result.get(key, 0)  # Default to 0 if key somehow missing
             if current_val is not None:
                 try:
@@ -351,14 +355,23 @@ class AnthropicAdapter(ProviderAdapter):
             try:
                 # Try to extract cache creation breakdown from response
                 usage_fields = self._extract_anthropic_usage_fields(
-                    getattr(response, 'usage', response)
+                    getattr(response, "usage", response)
                 )
-                cache_creation_5m_tokens = usage_fields.get("cache_creation_5m_tokens", 0) or 0
-                cache_creation_1h_tokens = usage_fields.get("cache_creation_1h_tokens", 0) or 0
-                total_cache_creation_tokens = usage_fields.get("cache_creation_input_tokens", 0) or 0
+                cache_creation_5m_tokens = (
+                    usage_fields.get("cache_creation_5m_tokens", 0) or 0
+                )
+                cache_creation_1h_tokens = (
+                    usage_fields.get("cache_creation_1h_tokens", 0) or 0
+                )
+                total_cache_creation_tokens = (
+                    usage_fields.get("cache_creation_input_tokens", 0) or 0
+                )
 
                 # If no detailed breakdown, assume all cache creation is 5m
-                if total_cache_creation_tokens > 0 and (cache_creation_5m_tokens + cache_creation_1h_tokens) == 0:
+                if (
+                    total_cache_creation_tokens > 0
+                    and (cache_creation_5m_tokens + cache_creation_1h_tokens) == 0
+                ):
                     cache_creation_5m_tokens = total_cache_creation_tokens
             except Exception:
                 # If extraction fails, continue with basic calculation
@@ -386,7 +399,9 @@ class AnthropicAdapter(ProviderAdapter):
 
         # 3. REGULAR INPUT TOKEN COSTS
         # Calculate uncached input tokens (total - cache_read - cache_creation)
-        total_special_tokens = actual_cached_read + cache_creation_5m_tokens + cache_creation_1h_tokens
+        total_special_tokens = (
+            actual_cached_read + cache_creation_5m_tokens + cache_creation_1h_tokens
+        )
         uncached_input_tokens = max(0, input_tokens - total_special_tokens)
 
         if uncached_input_tokens > 0 and price_info.get("in") is not None:

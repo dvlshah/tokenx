@@ -229,11 +229,11 @@ class TestAnthropicAdapter:
             "anthropic": {
                 "claude-caching-model": {
                     "sync": {
-                        "in": 10.00 / 1e6,         # Base input price
+                        "in": 10.00 / 1e6,  # Base input price
                         "cached_in": 12.50 / 1e6,  # 5m cache writes (1.25x)
                         "cached_1h": 20.00 / 1e6,  # 1h cache writes (2x)
                         "cached_hit": 1.00 / 1e6,  # Cache hits (0.1x)
-                        "out": 40.00 / 1e6,        # Output price
+                        "out": 40.00 / 1e6,  # Output price
                     }
                 }
             }
@@ -257,9 +257,9 @@ class TestAnthropicAdapter:
         # Expected cost: (uncached_input * in_price) + (cached_read * cached_hit_price) + (output * out_price)
         uncached_input = total_input - cached_read
         expected_cost = (
-            (uncached_input * (10.00 / 1e6))    # 700 * 10.00/1M
-            + (cached_read * (1.00 / 1e6))      # 300 * 1.00/1M (cached_hit pricing)
-            + (output * (40.00 / 1e6))          # 500 * 40.00/1M
+            (uncached_input * (10.00 / 1e6))  # 700 * 10.00/1M
+            + (cached_read * (1.00 / 1e6))  # 300 * 1.00/1M (cached_hit pricing)
+            + (output * (40.00 / 1e6))  # 500 * 40.00/1M
         )
 
         assert cost == pytest.approx(expected_cost)
@@ -288,8 +288,8 @@ class TestAnthropicAdapter:
         # When cached_hit pricing is not available, cache reads are effectively free (0 cost)
         uncached_input = total_input - cached_read
         expected_cost = (
-            (uncached_input * (3.00 / 1e6))    # 700 * 3.00/1M (regular input)
-            + (output * (15.00 / 1e6))         # 500 * 15.00/1M (output)
+            (uncached_input * (3.00 / 1e6))  # 700 * 3.00/1M (regular input)
+            + (output * (15.00 / 1e6))  # 500 * 15.00/1M (output)
             # Cached reads get 0 cost when cached_hit pricing is not available
         )
 
@@ -326,8 +326,8 @@ class TestAnthropicAdapter:
                 "claude-test-model": {
                     "sync": {
                         "in": 3.00 / 1e6,
-                        "cached_in": 3.75 / 1e6,   # 5m cache writes (1.25x)
-                        "cached_1h": 6.00 / 1e6,   # 1h cache writes (2x)
+                        "cached_in": 3.75 / 1e6,  # 5m cache writes (1.25x)
+                        "cached_1h": 6.00 / 1e6,  # 1h cache writes (2x)
                         "cached_hit": 0.30 / 1e6,  # Cache hits (0.1x)
                         "out": 15.00 / 1e6,
                     }
@@ -336,6 +336,7 @@ class TestAnthropicAdapter:
         }
         # Use the base adapter class directly to test response parameter
         from tokenx.providers.anthropic import AnthropicAdapter
+
         adapter = AnthropicAdapter()
 
         # Mock response with cache creation breakdown
@@ -347,24 +348,24 @@ class TestAnthropicAdapter:
         mock_cache_detail.ephemeral_5m_input_tokens = 200
         mock_cache_detail.ephemeral_1h_input_tokens = 0
         mock_usage.cache_creation = mock_cache_detail
-        
+
         mock_response = MagicMock()
         mock_response.usage = mock_usage
 
         cost = adapter.calculate_cost(
             "claude-test-model",
-            input_tokens=500,    # 200 cache write + 300 regular
+            input_tokens=500,  # 200 cache write + 300 regular
             output_tokens=100,
-            cached_tokens=0,     # No cache reads
+            cached_tokens=0,  # No cache reads
             tier="sync",
-            response=mock_response
+            response=mock_response,
         )
 
         # Expected: (cache_write_5m * cached_in_price) + (regular_input * in_price) + (output * out_price)
         expected_cost = (
-            (200 * (3.75 / 1e6))    # Cache writes use cached_in pricing
+            (200 * (3.75 / 1e6))  # Cache writes use cached_in pricing
             + (300 * (3.00 / 1e6))  # Regular input tokens
-            + (100 * (15.00 / 1e6)) # Output tokens
+            + (100 * (15.00 / 1e6))  # Output tokens
         )
 
         assert cost == pytest.approx(expected_cost)
@@ -377,8 +378,8 @@ class TestAnthropicAdapter:
                 "claude-test-model": {
                     "sync": {
                         "in": 3.00 / 1e6,
-                        "cached_in": 3.75 / 1e6,   # 5m cache writes
-                        "cached_1h": 6.00 / 1e6,   # 1h cache writes (2x)
+                        "cached_in": 3.75 / 1e6,  # 5m cache writes
+                        "cached_1h": 6.00 / 1e6,  # 1h cache writes (2x)
                         "cached_hit": 0.30 / 1e6,  # Cache hits
                         "out": 15.00 / 1e6,
                     }
@@ -387,6 +388,7 @@ class TestAnthropicAdapter:
         }
         # Use the base adapter class directly to test response parameter
         from tokenx.providers.anthropic import AnthropicAdapter
+
         adapter = AnthropicAdapter()
 
         # Mock response with 1h cache creation
@@ -398,22 +400,22 @@ class TestAnthropicAdapter:
         mock_cache_detail.ephemeral_5m_input_tokens = 0
         mock_cache_detail.ephemeral_1h_input_tokens = 150
         mock_usage.cache_creation = mock_cache_detail
-        
+
         mock_response = MagicMock()
         mock_response.usage = mock_usage
 
         cost = adapter.calculate_cost(
             "claude-test-model",
-            input_tokens=400,    # 150 cache write + 250 regular
+            input_tokens=400,  # 150 cache write + 250 regular
             output_tokens=80,
             cached_tokens=0,
             tier="sync",
-            response=mock_response
+            response=mock_response,
         )
 
         # Expected: (cache_write_1h * cached_1h_price) + (regular_input * in_price) + (output * out_price)
         expected_cost = (
-            (150 * (6.00 / 1e6))    # 1h cache writes use cached_1h pricing
+            (150 * (6.00 / 1e6))  # 1h cache writes use cached_1h pricing
             + (250 * (3.00 / 1e6))  # Regular input tokens
             + (80 * (15.00 / 1e6))  # Output tokens
         )
@@ -438,6 +440,7 @@ class TestAnthropicAdapter:
         }
         # Use the base adapter class directly to test response parameter
         from tokenx.providers.anthropic import AnthropicAdapter
+
         adapter = AnthropicAdapter()
 
         # Complex scenario with all cache types
@@ -449,7 +452,7 @@ class TestAnthropicAdapter:
         mock_cache_detail.ephemeral_5m_input_tokens = 200
         mock_cache_detail.ephemeral_1h_input_tokens = 100
         mock_usage.cache_creation = mock_cache_detail
-        
+
         mock_response = MagicMock()
         mock_response.usage = mock_usage
 
@@ -463,7 +466,7 @@ class TestAnthropicAdapter:
             output_tokens=output,
             cached_tokens=cache_reads,
             tier="sync",
-            response=mock_response
+            response=mock_response,
         )
 
         # Expected cost breakdown:
@@ -473,11 +476,11 @@ class TestAnthropicAdapter:
         # - Regular input: 550 * 15.00/1M (in)
         # - Output: 200 * 75.00/1M (out)
         expected_cost = (
-            (150 * (1.50 / 1e6))    # Cache reads
-            + (200 * (18.75 / 1e6)) # 5m cache writes
-            + (100 * (30.00 / 1e6)) # 1h cache writes
-            + (550 * (15.00 / 1e6)) # Regular input (1000 - 150 - 200 - 100)
-            + (200 * (75.00 / 1e6)) # Output
+            (150 * (1.50 / 1e6))  # Cache reads
+            + (200 * (18.75 / 1e6))  # 5m cache writes
+            + (100 * (30.00 / 1e6))  # 1h cache writes
+            + (550 * (15.00 / 1e6))  # Regular input (1000 - 150 - 200 - 100)
+            + (200 * (75.00 / 1e6))  # Output
         )
 
         assert cost == pytest.approx(expected_cost)
@@ -500,6 +503,7 @@ class TestAnthropicAdapter:
         }
         # Use the base adapter class directly
         from tokenx.providers.anthropic import AnthropicAdapter
+
         adapter = AnthropicAdapter()
 
         # Mock response with detailed cache creation breakdown
@@ -543,6 +547,7 @@ class TestAnthropicAdapter:
         }
         # Use the base adapter class directly
         from tokenx.providers.anthropic import AnthropicAdapter
+
         adapter = AnthropicAdapter()
 
         # Mock response without detailed cache breakdown
@@ -568,7 +573,7 @@ class TestAnthropicAdapter:
             output_tokens=100,
             cached_tokens=50,
             tier="sync",
-            response=mock_response
+            response=mock_response,
         )
 
         # Should assume all cache creation is 5m (cached_in pricing)
@@ -577,9 +582,9 @@ class TestAnthropicAdapter:
         # Regular input: (200 - 50 - 75) = 75 * in
         # Output: 100 * out
         expected_cost = (
-            (75 * (3.75 / 1e6))    # Cache writes (fallback to 5m)
+            (75 * (3.75 / 1e6))  # Cache writes (fallback to 5m)
             + (75 * (3.00 / 1e6))  # Regular input
-            + (100 * (15.00 / 1e6)) # Output
+            + (100 * (15.00 / 1e6))  # Output
         )
 
         assert cost == pytest.approx(expected_cost)
@@ -602,12 +607,12 @@ class TestAnthropicAdapter:
                 "claude-sonnet-4-20250514": {
                     "sync": {
                         "in": 3.00 / 1e6,
-                        "cached_in": 3.75 / 1e6,   # 1.25x
-                        "cached_1h": 6.00 / 1e6,   # 2x
+                        "cached_in": 3.75 / 1e6,  # 1.25x
+                        "cached_1h": 6.00 / 1e6,  # 2x
                         "cached_hit": 0.30 / 1e6,  # 0.1x
                         "out": 15.00 / 1e6,
                     }
-                }
+                },
             }
         }
         adapter = create_anthropic_adapter()
@@ -618,7 +623,7 @@ class TestAnthropicAdapter:
             input_tokens=1000,
             output_tokens=500,
             cached_tokens=0,
-            tier="sync"
+            tier="sync",
         )
         expected_opus = (1000 * (15.00 / 1e6)) + (500 * (75.00 / 1e6))
         assert cost_opus == pytest.approx(expected_opus)
@@ -629,7 +634,7 @@ class TestAnthropicAdapter:
             input_tokens=1000,
             output_tokens=500,
             cached_tokens=0,
-            tier="sync"
+            tier="sync",
         )
         expected_sonnet = (1000 * (3.00 / 1e6)) + (500 * (15.00 / 1e6))
         assert cost_sonnet == pytest.approx(expected_sonnet)
@@ -649,6 +654,7 @@ class TestAnthropicAdapter:
         }
         # Use the base adapter class directly
         from tokenx.providers.anthropic import AnthropicAdapter
+
         adapter = AnthropicAdapter()
 
         # Mock response with cache data (without cache_creation detail)
@@ -670,5 +676,9 @@ class TestAnthropicAdapter:
         assert usage.extra_fields["provider"] == "anthropic"
         assert usage.extra_fields["cache_creation_input_tokens"] == 75
         assert usage.extra_fields["cache_read_input_tokens"] == 50
-        assert usage.extra_fields["cache_creation_5m_tokens"] == 0  # Default when no breakdown
-        assert usage.extra_fields["cache_creation_1h_tokens"] == 0  # Default when no breakdown
+        assert (
+            usage.extra_fields["cache_creation_5m_tokens"] == 0
+        )  # Default when no breakdown
+        assert (
+            usage.extra_fields["cache_creation_1h_tokens"] == 0
+        )  # Default when no breakdown
