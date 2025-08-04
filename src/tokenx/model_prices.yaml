@@ -1,4 +1,4 @@
-# LLM token prices — refreshed 2025-08-02 (aligned with official OpenAI pricing)
+# LLM token prices — refreshed 2025-08-04 (aligned with official OpenAI + Anthropic Claude 4 pricing)
 #
 # Units: USD per ONE-MILLION tokens
 # Keys:
@@ -184,7 +184,7 @@ openai:
       cached_in: null
       out:       2.00
 
-  # GPT-4 Legacy Models  
+  # GPT-4 Legacy Models
   chatgpt-4o-latest:
     sync:
       in:        5.00
@@ -254,7 +254,7 @@ openai:
       in:        2.50     # $2.50 per 1M input tokens (text tokens)
       cached_in: null
       out:       10.00    # $10.00 per 1M output tokens (text tokens)
-      # Audio tokens  
+      # Audio tokens
       audio_in:  6.00     # $6.00 per 1M input tokens (audio tokens)
 
   gpt-4o-mini-transcribe:
@@ -354,63 +354,119 @@ openai:
       out:       null
 
 anthropic:
-  claude-3-opus-20240229:
+  # Claude 4 Models (Latest Generation)
+  claude-opus-4-20250514:
+    sync:
+      in: 15.00          # $15 per 1M tokens
+      cached_in: 18.75   # 5m cache writes: $18.75 per 1M tokens
+      cached_1h: 30.00   # 1h cache writes: $30 per 1M tokens
+      cached_hit: 1.50   # Cache hits & refreshes: $1.50 per 1M tokens
+      out: 75.00         # $75 per 1M tokens
+
+  claude-sonnet-4-20250514:
+    sync:
+      in: 3.00           # $3 per 1M tokens
+      cached_in: 3.75    # 5m cache writes: $3.75 per 1M tokens
+      cached_1h: 6.00    # 1h cache writes: $6 per 1M tokens
+      cached_hit: 0.30   # Cache hits & refreshes: $0.30 per 1M tokens
+      out: 15.00         # $15 per 1M tokens
+
+  # Model aliases for Claude 4
+  claude-opus-4-0:
     sync:
       in: 15.00
       cached_in: 18.75
+      cached_1h: 30.00
       cached_hit: 1.50
       out: 75.00
-  claude-3-5-sonnet-20240620:
+
+  claude-sonnet-4-0:
     sync:
       in: 3.00
       cached_in: 3.75
+      cached_1h: 6.00
       cached_hit: 0.30
       out: 15.00
-  claude-3-5-sonnet-20241022:
-    sync:
-      in: 3.00
-      cached_in: 3.75
-      cached_hit: 0.30
-      out: 15.00
-  claude-3-5-sonnet-latest:
-    sync:
-      in: 3.00
-      cached_in: 3.75
-      cached_hit: 0.30
-      out: 15.00
-  claude-3-sonnet-20240229:
-    sync:
-      in: 3.00
-      cached_in: 3.75
-      cached_hit: 0.30
-      out: 15.00
-  claude-3-haiku-20240307:
-    sync:
-      in: 0.25
-      cached_in: 0.30
-      cached_hit: 0.03
-      out: 1.25
-  claude-3-5-haiku-20240307:
-    sync:
-      in: 0.80
-      cached_in: 1.00
-      cached_hit: 0.08
-      out: 4.00
-  claude-3-5-haiku-latest:
-    sync:
-      in: 0.80
-      cached_in: 1.00
-      cached_hit: 0.08
-      out: 4.00
+
+  # Claude 3.7 Models
   claude-3-7-sonnet-20250219:
     sync:
-      in: 3.00
-      cached_in: 3.75
-      cached_hit: 0.30
-      out: 15.00
+      in: 3.00           # $3 per 1M tokens
+      cached_in: 3.75    # 5m cache writes: $3.75 per 1M tokens
+      cached_1h: 6.00    # 1h cache writes: $6 per 1M tokens
+      cached_hit: 0.30   # Cache hits & refreshes: $0.30 per 1M tokens
+      out: 15.00         # $15 per 1M tokens
+
   claude-3-7-sonnet-latest:
     sync:
       in: 3.00
       cached_in: 3.75
+      cached_1h: 6.00
       cached_hit: 0.30
       out: 15.00
+
+  # Claude 3.5 Models
+  claude-3-5-sonnet-20241022:
+    sync:
+      in: 3.00           # $3 per 1M tokens
+      cached_in: 3.75    # 5m cache writes: $3.75 per 1M tokens
+      cached_1h: 6.00    # 1h cache writes: $6 per 1M tokens
+      cached_hit: 0.30   # Cache hits & refreshes: $0.30 per 1M tokens
+      out: 15.00         # $15 per 1M tokens
+
+  claude-3-5-sonnet-20240620:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_1h: 6.00
+      cached_hit: 0.30
+      out: 15.00
+
+  claude-3-5-sonnet-latest:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_1h: 6.00
+      cached_hit: 0.30
+      out: 15.00
+
+  claude-3-5-haiku-20241022:
+    sync:
+      in: 0.80           # $0.80 per 1M tokens (updated pricing)
+      cached_in: 1.00    # 5m cache writes: $1 per 1M tokens
+      cached_1h: 1.60    # 1h cache writes: $1.6 per 1M tokens
+      cached_hit: 0.08   # Cache hits & refreshes: $0.08 per 1M tokens
+      out: 4.00          # $4 per 1M tokens
+
+  claude-3-5-haiku-latest:
+    sync:
+      in: 0.80
+      cached_in: 1.00
+      cached_1h: 1.60
+      cached_hit: 0.08
+      out: 4.00
+
+  # Claude 3 Legacy Models
+  claude-3-opus-20240229:
+    sync:
+      in: 15.00          # $15 per 1M tokens
+      cached_in: 18.75   # 5m cache writes: $18.75 per 1M tokens
+      cached_1h: 30.00   # 1h cache writes: $30 per 1M tokens
+      cached_hit: 1.50   # Cache hits & refreshes: $1.50 per 1M tokens
+      out: 75.00         # $75 per 1M tokens
+
+  claude-3-sonnet-20240229:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_1h: 6.00
+      cached_hit: 0.30
+      out: 15.00
+
+  claude-3-haiku-20240307:
+    sync:
+      in: 0.25           # $0.25 per 1M tokens (legacy pricing)
+      cached_in: 0.30    # 5m cache writes: $0.30 per 1M tokens
+      cached_1h: 0.50    # 1h cache writes: $0.50 per 1M tokens
+      cached_hit: 0.03   # Cache hits & refreshes: $0.03 per 1M tokens
+      out: 1.25          # $1.25 per 1M tokens

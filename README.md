@@ -49,6 +49,8 @@ Integrating with LLM APIs often involves hidden costs and variable performance. 
 *   **Latency measurement:** Measures API call response times.
 *   **Multi-provider support:** Supports OpenAI and Anthropic APIs.
 
+> **Note:** While tokenx strives for accuracy, there may be occasional discrepancies in token and cost metrics. If you encounter issues, please [report them here](https://github.com/dvlshah/tokenx/issues).
+
 ---
 
 ## 🏗️ Architecture (1‑min overview)
@@ -340,7 +342,7 @@ The price yaml will be automatically uploaded in the remote as the pricing infor
 
 ```python
 # First run - fetches latest prices
-from tokenx import CostCalculator
+from tokenx.cost_calc import CostCalculator
 calc = CostCalculator.for_provider("openai", "gpt-4o")
 # Output: "tokenx: Fetching latest model prices..."
 # Output: "tokenx: Cached latest prices locally."
