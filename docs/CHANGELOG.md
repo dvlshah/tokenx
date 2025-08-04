@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.8] - 2025-08-04
+
+### Fixed
+- **Critical Import-Time Failure**: Fixed package failing to import for new users when remote pricing unavailable
+- **Lazy Loading**: Pricing data now loads only when needed, not at import time
+- **Bundled Fallback**: Added bundled `model_prices.yaml` as last resort when remote sources fail
+- **Backward Compatibility**: All existing `PRICE_TABLE` and `PRICE_PER_TOKEN` APIs continue to work
+
+### Added
+- **Helpful Error Messages**: Clear guidance for new users when pricing data unavailable
+- **Robust Fallback Chain**: Remote → Cache → Bundled → Error with helpful instructions
+- **Package Data Configuration**: Bundled pricing file properly included in distribution
+
+### Technical Details
+- **Import Safety**: Module imports successfully even without network access
+- **Smart Caching**: 24-hour TTL with automatic remote updates when available
+- **Developer Experience**: Clear comments explaining OpenAI-only legacy behavior in `PRICE_PER_TOKEN`
+
 ## [0.2.7] - 2025-08-02
 
 ### Changed

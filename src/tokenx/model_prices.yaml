@@ -1,0 +1,416 @@
+# LLM token prices — refreshed 2025-08-02 (aligned with official OpenAI pricing)
+#
+# Units: USD per ONE-MILLION tokens
+# Keys:
+#   sync:  regular synchronous completions
+#   flex:  Flex/Batch processing (lower priority, if offered)
+#
+# For models that don't (yet) have flex pricing we omit the flex block.
+# --------------------------------------------------------------------
+
+openai:
+  # OpenAI models
+  gpt-4.1:
+    sync:
+      in:        2.00
+      cached_in: 0.50
+      out:       8.00
+
+  gpt-4.1-mini:
+    sync:
+      in:        0.40
+      cached_in: 0.10
+      out:       1.60
+
+  gpt-4.1-nano:
+    sync:
+      in:        0.10
+      cached_in: 0.025
+      out:       0.40
+
+  gpt-4.5-preview:
+    sync:
+      in:        75.00
+      cached_in: 37.50
+      out:       150.00
+
+  gpt-4o:
+    sync:
+      in:        2.50
+      cached_in: 1.25     # 50 %
+      out:       10.00
+
+  gpt-4o-realtime-preview:
+    sync:
+      in:        5.00
+      cached_in: 2.50
+      out:       20.00
+
+  gpt-4o-mini:
+    sync:
+      in:        0.15
+      cached_in: 0.075
+      out:       0.60
+
+  gpt-4o-mini-realtime-preview:
+    sync:
+      in:        0.60
+      cached_in: 0.30
+      out:       2.40
+
+  o1:
+    sync:
+      in:        15.00
+      cached_in: 7.50
+      out:       60.00
+
+  o1-mini:
+    sync:
+      in:        1.10
+      cached_in: 0.55
+      out:       4.40
+
+  o1-pro:
+    sync:
+      in:        150.00
+      cached_in: null      # "–" in table → not discounted / not supported
+      out:       600.00
+
+  o3:
+    sync:
+      in:        2.00
+      cached_in: 0.50
+      out:       8.00
+    flex:
+      in:        1.00
+      cached_in: 0.25
+      out:       4.00
+
+  o3-pro:
+    sync:
+      in:        20.00
+      cached_in: null      # No caching discount available
+      out:       80.00
+
+  o3-deep-research:
+    sync:
+      in:        10.00
+      cached_in: 2.50
+      out:       40.00
+
+  o3-mini:
+    sync:
+      in:        1.10
+      cached_in: 0.55
+      out:       4.40
+
+  o4-mini:
+    sync:
+      in:        1.10
+      cached_in: 0.275
+      out:       4.40
+    flex:
+      in:        0.55
+      cached_in: 0.138
+      out:       2.20
+
+  o4-mini-deep-research:
+    sync:
+      in:        2.00
+      cached_in: 0.50
+      out:       8.00
+
+  codex-mini-latest:
+    sync:
+      in:        1.50
+      cached_in: 0.375
+      out:       6.00
+
+  gpt-4o-mini-search-preview:
+    sync:
+      in:        0.15
+      cached_in: null
+      out:       0.60
+
+  gpt-4o-search-preview:
+    sync:
+      in:        2.50
+      cached_in: null
+      out:       10.00
+
+  computer-use-preview:
+    sync:
+      in:        3.00
+      cached_in: null
+      out:       12.00
+
+  gpt-image-1:
+    sync:
+      # Text tokens (for prompts)
+      in:        5.00     # $5.00 per 1M input tokens (text tokens)
+      cached_in: 1.25     # $1.25 per 1M cached input tokens (text tokens)
+      out:       null     # No text output tokens
+      # Image tokens
+      image_in:  10.00    # $10.00 per 1M input tokens (image tokens)
+      image_cached_in: 2.50  # $2.50 per 1M cached input tokens (image tokens)
+      image_out: 40.00    # $40.00 per 1M output tokens (image tokens)
+      # Per-image costs stored separately (processed differently by adapter)
+      images_low_1024x1024: 0.011000    # $0.011 per image (low quality, 1024x1024)
+      images_low_1024x1536: 0.016000    # $0.016 per image (low quality, 1024x1536)
+      images_low_1536x1024: 0.016000    # $0.016 per image (low quality, 1536x1024)
+      images_medium_1024x1024: 0.042000  # $0.042 per image (medium quality, 1024x1024)
+      images_medium_1024x1536: 0.063000  # $0.063 per image (medium quality, 1024x1536)
+      images_medium_1536x1024: 0.063000  # $0.063 per image (medium quality, 1536x1024)
+      images_high_1024x1024: 0.167000    # $0.167 per image (high quality, 1024x1024)
+      images_high_1024x1536: 0.250000    # $0.250 per image (high quality, 1024x1536)
+      images_high_1536x1024: 0.250000    # $0.250 per image (high quality, 1536x1024)
+
+  # GPT-3.5 and Legacy Models
+  gpt-3.5-turbo:
+    sync:
+      in:        0.50     # USD per 1M tokens
+      cached_in: 0.25     # 50 % discount
+      out:       1.50
+
+  gpt-3.5-turbo-0125:
+    sync:
+      in:        0.50     # USD per 1M tokens
+      cached_in: 0.25     # 50 % discount
+      out:       1.50
+
+  gpt-3.5-turbo-instruct:
+    sync:
+      in:        1.50
+      cached_in: null
+      out:       2.00
+
+  # GPT-4 Legacy Models  
+  chatgpt-4o-latest:
+    sync:
+      in:        5.00
+      cached_in: null
+      out:       15.00
+
+  gpt-4-turbo:
+    sync:
+      in:        10.00
+      cached_in: null
+      out:       30.00
+
+  gpt-4:
+    sync:
+      in:        30.00
+      cached_in: null
+      out:       60.00
+
+  gpt-4-32k:
+    sync:
+      in:        60.00
+      cached_in: null
+      out:       120.00
+
+  # Base models
+  davinci-002:
+    sync:
+      in:        2.00
+      cached_in: null
+      out:       2.00
+
+  babbage-002:
+    sync:
+      in:        0.40
+      cached_in: null
+      out:       0.40
+
+  # Embedding models
+  text-embedding-3-small:
+    sync:
+      in:        0.02     # $0.02 per 1M tokens
+      cached_in: null
+      out:       null     # embeddings don't have output tokens
+
+  text-embedding-3-large:
+    sync:
+      in:        0.13     # $0.13 per 1M tokens
+      cached_in: null
+      out:       null
+
+  text-embedding-ada-002:
+    sync:
+      in:        0.10     # $0.10 per 1M tokens
+      cached_in: null
+      out:       null
+
+  # Audio models - Transcription
+  whisper-1:
+    sync:
+      in:        6.00     # $6.00 per hour for audio processing (legacy)
+      cached_in: null
+      out:       null     # transcription pricing is time-based, not token-based
+
+  gpt-4o-transcribe:
+    sync:
+      # Text tokens
+      in:        2.50     # $2.50 per 1M input tokens (text tokens)
+      cached_in: null
+      out:       10.00    # $10.00 per 1M output tokens (text tokens)
+      # Audio tokens  
+      audio_in:  6.00     # $6.00 per 1M input tokens (audio tokens)
+
+  gpt-4o-mini-transcribe:
+    sync:
+      # Text tokens
+      in:        1.25     # $1.25 per 1M input tokens (text tokens)
+      cached_in: null
+      out:       5.00     # $5.00 per 1M output tokens (text tokens)
+      # Audio tokens
+      audio_in:  3.00     # $3.00 per 1M input tokens (audio tokens)
+
+  # Audio models - Realtime & Audio Preview
+  gpt-4o-audio-preview:
+    sync:
+      # Text tokens
+      in:        2.50     # $2.50 per 1M input tokens (text tokens)
+      cached_in: null
+      out:       10.00    # $10.00 per 1M output tokens (text tokens)
+      # Audio tokens
+      audio_in:  40.00    # $40.00 per 1M input tokens (audio tokens)
+      audio_out: 80.00    # $80.00 per 1M output tokens (audio tokens)
+
+  gpt-4o-mini-audio-preview:
+    sync:
+      # Text tokens
+      in:        0.15     # $0.15 per 1M input tokens (text tokens)
+      cached_in: null
+      out:       0.60     # $0.60 per 1M output tokens (text tokens)
+      # Audio tokens
+      audio_in:  10.00    # $10.00 per 1M input tokens (audio tokens)
+      audio_out: 20.00    # $20.00 per 1M output tokens (audio tokens)
+
+  gpt-4o-realtime-preview:
+    sync:
+      in:        40.00    # $40.00 per 1M input tokens
+      cached_in: 2.50     # $2.50 per 1M cached input tokens
+      out:       80.00    # $80.00 per 1M output tokens
+
+  gpt-4o-mini-realtime-preview:
+    sync:
+      in:        10.00    # $10.00 per 1M input tokens
+      cached_in: 0.30     # $0.30 per 1M cached input tokens
+      out:       20.00    # $20.00 per 1M output tokens
+
+  # Text-to-Speech models
+  tts-1:
+    sync:
+      in:        15.00    # $15.00 per 1M characters
+      cached_in: null
+      out:       null     # TTS generates audio, not tokens
+
+  tts-1-hd:
+    sync:
+      in:        30.00    # $30.00 per 1M characters
+      cached_in: null
+      out:       null
+
+  gpt-4o-mini-tts:
+    sync:
+      # Text tokens
+      in:        0.60     # $0.60 per 1M input tokens (text tokens)
+      cached_in: null
+      out:       null     # TTS generates audio, not text tokens
+      # Audio tokens (output)
+      audio_out: 12.00    # $12.00 per 1M output tokens (audio tokens)
+
+  # Moderation models (FREE per official pricing)
+  omni-moderation-latest:
+    sync:
+      in:        0.00     # FREE - $0.00 per 1M input tokens
+      cached_in: null
+      out:       null     # moderation doesn't generate tokens
+
+  text-moderation-latest:
+    sync:
+      in:        0.00     # FREE - $0.00 per 1M input tokens
+      cached_in: null
+      out:       null
+
+  text-moderation-stable:
+    sync:
+      in:        0.00     # FREE - $0.00 per 1M input tokens
+      cached_in: null
+      out:       null
+
+  # Image generation models
+  dall-e-3:
+    sync:
+      in:        40.00    # $0.040 per image (1024×1024), converted to per-token equivalent
+      cached_in: null
+      out:       null     # images don't generate tokens
+
+  dall-e-2:
+    sync:
+      in:        20.00    # $0.020 per image (1024×1024), converted to per-token equivalent
+      cached_in: null
+      out:       null
+
+anthropic:
+  claude-3-opus-20240229:
+    sync:
+      in: 15.00
+      cached_in: 18.75
+      cached_hit: 1.50
+      out: 75.00
+  claude-3-5-sonnet-20240620:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_hit: 0.30
+      out: 15.00
+  claude-3-5-sonnet-20241022:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_hit: 0.30
+      out: 15.00
+  claude-3-5-sonnet-latest:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_hit: 0.30
+      out: 15.00
+  claude-3-sonnet-20240229:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_hit: 0.30
+      out: 15.00
+  claude-3-haiku-20240307:
+    sync:
+      in: 0.25
+      cached_in: 0.30
+      cached_hit: 0.03
+      out: 1.25
+  claude-3-5-haiku-20240307:
+    sync:
+      in: 0.80
+      cached_in: 1.00
+      cached_hit: 0.08
+      out: 4.00
+  claude-3-5-haiku-latest:
+    sync:
+      in: 0.80
+      cached_in: 1.00
+      cached_hit: 0.08
+      out: 4.00
+  claude-3-7-sonnet-20250219:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_hit: 0.30
+      out: 15.00
+  claude-3-7-sonnet-latest:
+    sync:
+      in: 3.00
+      cached_in: 3.75
+      cached_hit: 0.30
+      out: 15.00
