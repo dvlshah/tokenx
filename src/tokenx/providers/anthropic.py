@@ -1,5 +1,13 @@
 """
 Anthropic Provider Adapter Implementation
+
+Enhanced with proper prompt caching cost calculation:
+- Cache reads: Use 'cached_hit' pricing (0.1x base input price)
+- Cache writes (5m): Use 'cached_in' pricing (1.25x base input price)
+- Cache writes (1h): Use 'cached_1h' pricing (2x base input price)
+- Regular input: Use base 'in' pricing
+
+Fixes applied in v0.2.8+ for accurate Anthropic prompt caching costs.
 """
 
 from typing import Any, Dict, Optional, Tuple
@@ -60,13 +68,18 @@ class AnthropicAdapter(ProviderAdapter):
         """
         Extract standard and cache-specific token fields from Anthropic usage data.
         Defaults cache-related fields to 0 if not present or None.
+        Now includes detailed cache creation breakdown for accurate pricing.
         """
         result = {
             "input_tokens": None,
             "output_tokens": None,
             "cache_read_input_tokens": 0,  # Default to 0
             "cache_creation_input_tokens": 0,  # Default to 0
+            # Enhanced: Cache creation breakdown for accurate pricing
+            "cache_creation_5m_tokens": 0,  # 5-minute TTL cache writes
+            "cache_creation_1h_tokens": 0,  # 1-hour TTL cache writes
         }
+
         # Try attribute-based access (Pydantic models)
         if hasattr(usage_data, "__dict__") or hasattr(usage_data, "__getattr__"):
             result["input_tokens"] = getattr(usage_data, "input_tokens", None)
@@ -80,6 +93,16 @@ class AnthropicAdapter(ProviderAdapter):
             result["cache_creation_input_tokens"] = (
                 cache_creation if cache_creation is not None else 0
             )
+
+            # Extract detailed cache creation breakdown if available
+            cache_creation_detail = getattr(usage_data, "cache_creation", None)
+            if cache_creation_detail:
+                result["cache_creation_5m_tokens"] = int(
+                    getattr(cache_creation_detail, "ephemeral_5m_input_tokens", 0) or 0
+                )
+                result["cache_creation_1h_tokens"] = int(
+                    getattr(cache_creation_detail, "ephemeral_1h_input_tokens", 0) or 0
+                )
 
         # Fallback to dictionary-based access
         elif isinstance(usage_data, dict):
@@ -95,6 +118,16 @@ class AnthropicAdapter(ProviderAdapter):
                 cache_creation if cache_creation is not None else 0
             )
 
+            # Extract detailed cache creation breakdown if available
+            cache_creation_detail = usage_data.get("cache_creation", {})
+            if isinstance(cache_creation_detail, dict):
+                result["cache_creation_5m_tokens"] = int(
+                    cache_creation_detail.get("ephemeral_5m_input_tokens", 0) or 0
+                )
+                result["cache_creation_1h_tokens"] = int(
+                    cache_creation_detail.get("ephemeral_1h_input_tokens", 0) or 0
+                )
+
         # Ensure token counts are integers (input/output can be None if not found)
         for key in ["input_tokens", "output_tokens"]:
             if result.get(key) is not None:
@@ -105,7 +138,12 @@ class AnthropicAdapter(ProviderAdapter):
                     result[key] = None
 
         # For cache fields, ensure they are int, defaulting to 0 if conversion fails
-        for key in ["cache_read_input_tokens", "cache_creation_input_tokens"]:
+        for key in [
+            "cache_read_input_tokens",
+            "cache_creation_input_tokens",
+            "cache_creation_5m_tokens",
+            "cache_creation_1h_tokens",
+        ]:
             current_val = result.get(key, 0)  # Default to 0 if key somehow missing
             if current_val is not None:
                 try:
@@ -184,6 +222,13 @@ class AnthropicAdapter(ProviderAdapter):
             ),
             "cache_read_input_tokens": extracted_fields.get(
                 "cache_read_input_tokens", 0
+            ),
+            # Enhanced: Store detailed cache creation breakdown for accurate cost calculation
+            "cache_creation_5m_tokens": extracted_fields.get(
+                "cache_creation_5m_tokens", 0
+            ),
+            "cache_creation_1h_tokens": extracted_fields.get(
+                "cache_creation_1h_tokens", 0
             ),
             "raw_usage": usage_data if isinstance(usage_data, dict) else None,
         }
@@ -269,8 +314,12 @@ class AnthropicAdapter(ProviderAdapter):
         response: Optional[Any] = None,
     ) -> float:
         """
-        Calculate cost in USD based on token usage for Anthropic models.
-        Uses 'cached_tokens' (cache_read_input_tokens) for potential 'cached_in' pricing.
+        Calculate cost in USD based on token usage for Anthropic models with proper cache pricing.
+
+        Pricing Structure:
+        - cached_tokens (cache reads): Use 'cached_hit' pricing (0.1x base)
+        - cache_creation_input_tokens: Use 'cached_in' (5m, 1.25x) or 'cached_1h' (1h, 2x)
+        - regular input_tokens: Use base 'in' pricing
         """
         if not self._prices:
             raise PricingError(
@@ -297,27 +346,71 @@ class AnthropicAdapter(ProviderAdapter):
         price_info = self._prices[model][tier]
         cost = 0.0
 
-        # Calculate input cost, potentially using 'cached_in' price for tokens read from cache.
-        # Ensure cached_tokens doesn't exceed total input_tokens for safety, though logically
+        # Extract cache creation info from response if available
+        cache_creation_5m_tokens = 0
+        cache_creation_1h_tokens = 0
+        total_cache_creation_tokens = 0
+
+        if response is not None:
+            try:
+                # Try to extract cache creation breakdown from response
+                usage_fields = self._extract_anthropic_usage_fields(
+                    getattr(response, "usage", response)
+                )
+                cache_creation_5m_tokens = (
+                    usage_fields.get("cache_creation_5m_tokens", 0) or 0
+                )
+                cache_creation_1h_tokens = (
+                    usage_fields.get("cache_creation_1h_tokens", 0) or 0
+                )
+                total_cache_creation_tokens = (
+                    usage_fields.get("cache_creation_input_tokens", 0) or 0
+                )
+
+                # If no detailed breakdown, assume all cache creation is 5m
+                if (
+                    total_cache_creation_tokens > 0
+                    and (cache_creation_5m_tokens + cache_creation_1h_tokens) == 0
+                ):
+                    cache_creation_5m_tokens = total_cache_creation_tokens
+            except Exception:
+                # If extraction fails, continue with basic calculation
+                pass
+
+        # 1. CACHE READ COSTS (cache_read_input_tokens)
+        # Use 'cached_hit' pricing (0.1x base) for tokens read from cache
         actual_cached_read = min(cached_tokens, input_tokens)
-        uncached_input_tokens = input_tokens - actual_cached_read
-        # Use 'cached_in' price if available in YAML AND we read tokens from cache
-        cached_price_per_token = price_info.get("cached_in")
-        if cached_price_per_token is not None:
-            cost += (
-                uncached_input_tokens * price_info["in"]
-            )  # Uncached part uses 'in' price
-            cost += (
-                actual_cached_read * cached_price_per_token
-            )  # Cached part uses 'cached_in' price
-        elif (
-            price_info.get("in") is not None
-        ):  # If no cached_in price, all input uses 'in' price
-            cost += input_tokens * price_info["in"]
-        # Note: If 'in' price is also None, input cost is 0 (this handles models with only output price)
-        # Add output token cost if available
-        if price_info.get("out") is not None:  # Ensure 'out' price exists
+        if actual_cached_read > 0:
+            cached_hit_price = price_info.get("cached_hit")
+            if cached_hit_price is not None:
+                cost += actual_cached_read * cached_hit_price
+
+        # 2. CACHE WRITE COSTS (cache_creation_input_tokens)
+        # Use 'cached_in' (5m, 1.25x) or 'cached_1h' (1h, 2x) pricing
+        if cache_creation_5m_tokens > 0:
+            cached_5m_price = price_info.get("cached_in")  # 5m cache writes
+            if cached_5m_price is not None:
+                cost += cache_creation_5m_tokens * cached_5m_price
+
+        if cache_creation_1h_tokens > 0:
+            cached_1h_price = price_info.get("cached_1h")  # 1h cache writes
+            if cached_1h_price is not None:
+                cost += cache_creation_1h_tokens * cached_1h_price
+
+        # 3. REGULAR INPUT TOKEN COSTS
+        # Calculate uncached input tokens (total - cache_read - cache_creation)
+        total_special_tokens = (
+            actual_cached_read + cache_creation_5m_tokens + cache_creation_1h_tokens
+        )
+        uncached_input_tokens = max(0, input_tokens - total_special_tokens)
+
+        if uncached_input_tokens > 0 and price_info.get("in") is not None:
+            cost += uncached_input_tokens * price_info["in"]
+
+        # 4. OUTPUT TOKEN COSTS (unchanged)
+        if price_info.get("out") is not None:
             cost += output_tokens * price_info["out"]
+
         return cost
 
 

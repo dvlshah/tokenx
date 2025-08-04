@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.9] - 2025-08-04
+
+### Fixed
+- Anthropic cache cost calculation now properly handles differentiated pricing for cache reads (0.1x), 5-minute cache writes (1.25x), and 1-hour cache writes (2x)
+
+### Added
+- Support for new Claude 4 models (opus-4, sonnet-4) with complete cache pricing tiers
+- Claude 3.7 Sonnet models to pricing configuration
+
+### Changed
+- Updated Claude 3.5 Haiku pricing from $0.25 to $0.80 per 1M tokens
+
 ## [0.2.8] - 2025-08-04
 
 ### Fixed
